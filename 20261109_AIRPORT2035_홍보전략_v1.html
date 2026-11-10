@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AIRPORT 2035 홍보 전략안</title>
+<!--
+  ppt-slide 템플릿. 사용법은 SKILL.md.
+  - 색은 :root 팔레트 블록만 바꾼다 (승인된 팔레트).
+  - 슬라이드는 <section class="slide"> 를 복사해 내용만 바꾼다. 엔진 CSS·JS는 고치지 않는다.
+  - 모든 크기는 calc(N * var(--u)) — 1920x1080 시안 기준 px.
+-->
+<script>document.documentElement.classList.add('js')</script>
+<style>
+  /* ===== 팔레트: 주제별로 이 블록만 바꾼다 (ppt-research.md 2-6) =====
+     승인된 팔레트 이름: 원본 제안서 남색·주황 (주황 글자 #a84a17로 대비 조정)
+     글자 토큰(ink·muted·accent·accent-2·good·bad)은 paper·accent-soft 위에서 4.5:1 이상 */
+  :root {
+    --bg: #111317;            /* 레터박스 띠 (무대 밖) */
+    --paper: #ffffff;         /* 슬라이드 배경 */
+    --ink: #1b2433;           /* 본문 글자 */
+    --muted: #5b6573;         /* 보조 글자·출처 */
+    --line: #d5dbe4;          /* 구분선·테두리 (장식) */
+    --soft: #f4f6fa;          /* 표 첫 칸·상자 바탕 */
+    --accent: #1f3a6b;        /* 주 강조: 원본 남색 */
+    --accent-soft: #e8eef7;   /* 메시지 바 연파랑 */
+    --accent-2: #a84a17;      /* 보조 강조: 주황 (글자용, 대비 조정) */
+    --accent-2-fill: #d9692b; /* 원본 주황: 글자 없는 면·테두리에만 */
+    --good: #187a43;          /* 긍정·권장 */
+    --bad: #a3201a;           /* 부정·주의 */
+    --hl: #fcdcc4;            /* 주황 형광펜 */
+    /* ===== 팔레트 끝 ===== */
+    --step-dur: .4s;
+    --step-gap: 80ms;
+    --progress: 0;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }   /* iOS 가로 모드 글자 자동 확대 방지 */
+  body {
+    background: var(--bg);
+    display: grid;
+    place-items: center;
+    height: 100vh; height: 100dvh;
+    overflow: hidden;
+    font-family: system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  }
+
+  /* ---------- 원칙 1·2: 16:9 무대 ---------- */
+  .stage {
+    /* 너비·높이를 둘 다 명시: aspect-ratio 없이도 항상 16:9 */
+    width:  min(100vw, 100vh * 16 / 9);
+    height: min(100vh, 100vw * 9 / 16);
+    width:  min(100vw, 100dvh * 16 / 9);
+    height: min(100dvh, 100vw * 9 / 16);
+    --u: min(100vw / 1920, 100vh / 1080);     /* 1920px 시안의 1px */
+    position: relative;
+    overflow: hidden;                         /* 내용이 넘쳐도 무대 크기는 그대로 */
+    display: grid;
+    grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+    touch-action: pan-y pinch-zoom;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  @supports (height: 100dvh) {
+    .stage { --u: min(100vw / 1920, 100dvh / 1080); }
+  }
+
+  /* ---------- 원칙 3·4: 겹치기 + 숨김 ---------- */
+  .slide {
+    grid-area: 1 / 1;
+    overflow: hidden;
+    padding: calc(84 * var(--u)) calc(112 * var(--u)) calc(72 * var(--u));
+    font-size: calc(32 * var(--u));
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    background: var(--paper);                 /* 불투명: 아래 장의 잔상이 비치지 않게 */
+    word-break: keep-all;                     /* 한국어를 글자 중간이 아니라 띄어쓰기에서만 줄바꿈 */
+    overflow-wrap: break-word;                /* 띄어쓰기 없는 긴 영문·숫자만 예외로 끊음 */
+  }
+  .slide h1, .slide h2, .slide h3 { text-wrap: balance; }   /* 두 줄이 되면 줄 길이를 고르게 (미지원 브라우저는 무시) */
+  .slide p, .slide li, .slide td { text-wrap: pretty; }     /* 마지막 줄에 한 단어만 남는 것 방지 (미지원 브라우저는 무시) */
+  .nowrap { white-space: nowrap; }                          /* 전화번호·시간·날짜·단위는 한 덩어리로 */
+  .js .slide { visibility: hidden; }
+  .js .slide.is-current,
+  .js .slide.is-outgoing,
+  .js .slide.is-incoming { visibility: visible; }
+  .slide.is-outgoing { z-index: 1; }
+  .slide.is-incoming, .slide.is-current { z-index: 2; }
+  .stage[data-animating] .slide { pointer-events: none; }
+  html:not(.js) .slide:not(:first-child) { display: none; }    /* JS 꺼짐: 첫 장만 */
+
+  /* ---------- 공통 타이포 ---------- */
+  .eyebrow { color: var(--accent); font-weight: 700; font-size: calc(24 * var(--u)); letter-spacing: .04em; margin: 0 0 calc(10 * var(--u)); }
+  .slide h1 { font-size: calc(92 * var(--u)); line-height: 1.15; margin: 0 0 calc(28 * var(--u)); }
+  .slide h2 { font-size: calc(60 * var(--u)); line-height: 1.2; margin: 0 0 calc(36 * var(--u)); }
+  .slide h3 { font-size: calc(30 * var(--u)); margin: 0 0 calc(14 * var(--u)); }
+  .slide p  { margin: 0 0 calc(16 * var(--u)); }
+  .slide ul, .slide ol { margin: 0; padding-left: 1.2em; }
+  .slide li { margin: 0 0 calc(10 * var(--u)); }
+  .muted { color: var(--muted); }
+  .spacer { flex: 1; }
+  .footnote { font-size: calc(20 * var(--u)); color: var(--muted); margin: calc(16 * var(--u)) 0 0 !important; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: calc(52 * var(--u)); align-items: start; }
+  .ok { color: var(--good); font-weight: 700; }
+  .no { color: var(--bad); font-weight: 700; }
+
+  code, pre, kbd, .live { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  pre {
+    margin: 0; padding: calc(26 * var(--u)) calc(30 * var(--u));
+    background: var(--soft); border-radius: calc(14 * var(--u));
+    font-size: calc(24 * var(--u)); line-height: 1.6; white-space: pre; overflow: hidden;
+  }
+  kbd {
+    display: inline-block; min-width: 1.8em; text-align: center;
+    padding: 0 .4em; border: calc(2 * var(--u)) solid var(--line);
+    border-bottom-width: calc(4 * var(--u)); border-radius: calc(8 * var(--u));
+    font-size: .85em; background: var(--paper);
+  }
+  .live { color: var(--accent); font-weight: 700; }
+
+  .callout {
+    background: var(--accent-soft);
+    border-left: calc(8 * var(--u)) solid var(--accent);
+    border-radius: calc(14 * var(--u));
+    padding: calc(26 * var(--u)) calc(32 * var(--u));
+    font-size: calc(28 * var(--u));
+  }
+  .callout h3 { color: var(--accent); }
+  .callout ul { padding-left: 1em; }
+
+  table { border-collapse: collapse; width: 100%; font-size: calc(26 * var(--u)); }
+  th, td { text-align: left; padding: calc(12 * var(--u)) calc(18 * var(--u)); border-bottom: calc(2 * var(--u)) solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  tr.pick td { background: var(--accent-soft); font-weight: 600; }
+
+  .map { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(14 * var(--u)) calc(48 * var(--u)); font-size: calc(27 * var(--u)); }
+  .map div { display: grid; grid-template-columns: calc(150 * var(--u)) 1fr calc(110 * var(--u)); gap: calc(14 * var(--u)); padding: calc(12 * var(--u)) 0; border-bottom: calc(2 * var(--u)) solid var(--line); }
+  .map b { color: var(--accent); }
+  .map span:last-child { color: var(--muted); text-align: right; }
+
+  .cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(28 * var(--u)); }
+  .cards.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .card { border: calc(2 * var(--u)) solid var(--line); border-radius: calc(18 * var(--u)); padding: calc(28 * var(--u)); font-size: calc(26 * var(--u)); }
+  .card b { display: block; font-size: calc(34 * var(--u)); margin-bottom: calc(8 * var(--u)); }
+  .card.pick { border-color: var(--accent); }
+
+  .timeline { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(24 * var(--u)); }
+  .timeline div { border-top: calc(8 * var(--u)) solid var(--accent); padding-top: calc(18 * var(--u)); font-size: calc(28 * var(--u)); }
+  .timeline b { display: block; font-size: calc(40 * var(--u)); }
+
+  .notes { display: none; }
+
+  /* ---------- 원칙 6: 빌드 스텝 ---------- */
+  /* 스텝 전환은 현재 장에서만 켠다. 장이 숨겨질 때 스텝이 visibility 전환 때문에
+     0.4초 더 보이는 잔상(9→10장)을 막기 위해서다. 장이 나가기 시작하면 is-current가
+     빠지므로 스텝은 슬라이드와 함께 즉시 숨겨진다. */
+  .js .slide.is-current [data-step] {
+    transition: opacity var(--step-dur) ease, transform var(--step-dur) ease,
+                visibility var(--step-dur), background-size var(--step-dur) ease;
+  }
+  .js [data-step]:not(.is-visible):not([data-effect="highlight"]):not([data-effect="strike"]) {
+    opacity: 0; visibility: hidden;
+  }
+  .js .slide.is-current [data-step].is-visible { transition-delay: calc(var(--i, 0) * var(--step-gap)); }   /* stagger: 나타날 때만 */
+  .js [data-effect="fade-up"], .js [data-effect="grow"] { display: inline-block; }
+  .js p[data-effect], .js .card[data-effect], .js .timeline > [data-effect] { display: block; }
+  .js li[data-effect] { display: list-item; }
+  .js [data-effect="fade-up"]:not(.is-visible) { transform: translateY(1em); }
+  .js [data-effect="grow"]:not(.is-visible)    { transform: scale(.85); }
+  [data-effect="highlight"] {
+    background: linear-gradient(var(--hl), var(--hl)) no-repeat 0 100% / 0% 100%;
+    color: inherit;
+  }
+  .js [data-effect="highlight"].is-visible { background-size: 100% 100%; }
+  .js [data-effect="strike"].is-visible    { text-decoration: line-through; opacity: .55; }
+
+  /* ---------- 원칙 7: 진행 막대·번호 (무대 안) ---------- */
+  .progress { position: absolute; left: 0; right: 0; bottom: 0; height: calc(8 * var(--u)); background: var(--soft); z-index: 5; }
+  .progress > span {
+    display: block; height: 100%; background: var(--accent);
+    transform: scaleX(var(--progress)); transform-origin: 0 50%;
+    transition: transform .3s ease;
+  }
+  /* 버튼·번호도 무대 안에 두고 --u로 크기 지정: 어떤 창에서도 같은 자리 */
+  .controls {
+    position: absolute; right: calc(32 * var(--u)); bottom: calc(18 * var(--u)); z-index: 5;
+    display: flex; align-items: center; gap: calc(10 * var(--u));
+    opacity: .6; transition: opacity .2s;
+  }
+  .controls:hover, .controls:focus-within { opacity: 1; }
+  .controls button {
+    width: calc(44 * var(--u)); height: calc(44 * var(--u)); padding: 0;
+    border-radius: calc(10 * var(--u)); border: calc(2 * var(--u)) solid var(--line);
+    background: var(--paper); color: var(--ink);
+    font: calc(24 * var(--u))/1 system-ui, sans-serif; cursor: pointer;
+  }
+  .controls button:focus-visible { outline: calc(3 * var(--u)) solid var(--accent); outline-offset: calc(3 * var(--u)); }
+  .counter { margin: 0 calc(6 * var(--u)); font-size: calc(22 * var(--u)); color: var(--muted); min-width: 3.5em; text-align: center; }
+
+  /* 화면 끄기 ( . 또는 B ) */
+  .blackout { position: fixed; inset: 0; background: #000; z-index: 30; display: none; }
+  html.is-black .blackout { display: block; }
+
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  /* ---------- 원칙 9: 모션 축소 ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    .js [data-step] { transform: none !important; }
+    .js .slide.is-current [data-step] {
+      transition: opacity .15s linear, visibility .15s, background-size 0s !important;
+      transition-delay: 0s !important;
+    }
+    .progress > span { transition: none; }
+  }
+
+  /* ---------- 원칙 10: 인쇄 = 1장 1페이지, 16:9 용지 ---------- */
+  @page { size: 16in 9in; margin: 0; }
+  @media print {
+    html, body { display: block; height: auto; overflow: visible; background: none; }
+    .stage { display: block; width: 16in; height: auto; overflow: visible; --u: calc(16in / 1920); }
+    .slide, .js .slide, html:not(.js) .slide:not(:first-child) {
+      display: flex; visibility: visible !important; opacity: 1 !important; transform: none !important;
+      width: 16in; height: 9in; break-after: page;
+    }
+    section.slide:last-of-type { break-after: auto; }
+    .js [data-step] { opacity: 1 !important; visibility: visible !important; transform: none !important; transition: none !important; }
+    .progress, .controls, .blackout, .sr-only { display: none !important; }   /* 마지막 빈 페이지 방지 */
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+<style>
+  /* ===== 덱 전용 양식: 원본 제안서(AIRPORT 2035) 레이아웃 재현. 색은 팔레트 토큰만 사용 ===== */
+  .slide.page { padding: calc(40 * var(--u)) calc(80 * var(--u)) calc(30 * var(--u)); font-size: calc(26 * var(--u)); }
+  .slide.page::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: calc(10 * var(--u)); background: var(--accent); }
+  .page-head { display: flex; justify-content: space-between; align-items: center; border-bottom: calc(3 * var(--u)) solid var(--accent); padding: calc(6 * var(--u)) 0 calc(14 * var(--u)); margin-bottom: calc(26 * var(--u)); font-size: calc(21 * var(--u)); font-weight: 700; color: var(--muted); }
+  .page-head .chap { display: flex; align-items: center; gap: calc(14 * var(--u)); }
+  .page-head .chap i { font-style: normal; background: var(--accent); color: var(--paper); min-width: calc(44 * var(--u)); height: calc(44 * var(--u)); padding: 0 calc(8 * var(--u)); display: grid; place-items: center; }
+  .slide.page h2 { font-size: calc(50 * var(--u)); margin: 0 0 calc(20 * var(--u)); color: var(--ink); }
+  .slide.page h2 .no { color: var(--accent); margin-right: calc(22 * var(--u)); }
+  .msg { background: var(--accent-soft); border-left: calc(8 * var(--u)) solid var(--accent); padding: calc(16 * var(--u)) calc(28 * var(--u)); font-weight: 700; font-size: calc(28 * var(--u)); color: var(--accent); margin: 0 0 calc(24 * var(--u)) !important; }
+  .msg mark { background: var(--hl); color: inherit; padding: 0 .15em; }
+  .page-foot { display: flex; justify-content: space-between; border-top: calc(2 * var(--u)) solid var(--line); padding-top: calc(10 * var(--u)); margin-top: calc(12 * var(--u)); font-size: calc(20 * var(--u)); font-weight: 700; color: var(--muted); }
+  .slide.page .footnote { margin-top: calc(10 * var(--u)) !important; }
+
+  /* 남색 헤더 표 */
+  table.grid { font-size: calc(27 * var(--u)); border-bottom: calc(3 * var(--u)) solid var(--accent); }
+  table.grid th { background: var(--accent); color: var(--paper); font-weight: 700; padding: calc(14 * var(--u)) calc(18 * var(--u)); border: 0; }
+  table.grid td { padding: calc(17 * var(--u)) calc(20 * var(--u)); }
+  table.grid td:first-child { font-weight: 700; background: var(--soft); white-space: nowrap; }
+  table.grid td.em { color: var(--accent-2); font-weight: 700; }
+
+  /* 2단: 왼쪽 표 / 오른쪽 KPI */
+  .split { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: calc(36 * var(--u)); align-items: stretch; }
+  .kpi { background: var(--accent); color: var(--paper); padding: calc(24 * var(--u)) calc(30 * var(--u)); display: flex; flex-direction: column; gap: calc(6 * var(--u)); }
+  .kpi small { font-size: calc(21 * var(--u)); font-weight: 700; letter-spacing: .04em; opacity: .85; }
+  .kpi .big { font-size: calc(84 * var(--u)); font-weight: 800; line-height: 1.05; }
+  .kpi .big span { font-size: calc(32 * var(--u)); margin-left: calc(6 * var(--u)); }
+  .kpi p { font-size: calc(23 * var(--u)); margin: 0 !important; }
+  .kpi ul { font-size: calc(23 * var(--u)); padding-left: 1em; margin-top: calc(8 * var(--u)); border-top: calc(2 * var(--u)) solid var(--paper); padding-top: calc(12 * var(--u)); }
+  .kpi li { margin-bottom: calc(4 * var(--u)); }
+  .side { display: flex; flex-direction: column; gap: calc(18 * var(--u)); }
+  .first { border: calc(2 * var(--u)) solid var(--accent-2-fill); border-top-width: calc(8 * var(--u)); padding: calc(18 * var(--u)) calc(26 * var(--u)); font-size: calc(23 * var(--u)); }
+  .first b { display: block; color: var(--accent-2); font-size: calc(22 * var(--u)); margin-bottom: calc(4 * var(--u)); }
+
+  /* 일정 띠 */
+  .strip { display: grid; grid-template-columns: calc(150 * var(--u)) repeat(4, minmax(0, 1fr)); gap: calc(10 * var(--u)); align-items: stretch; margin-top: calc(30 * var(--u)); font-size: calc(24 * var(--u)); }
+  .strip > b { color: var(--accent); align-self: center; font-size: calc(24 * var(--u)); }
+  .strip > div { background: var(--soft); border: calc(2 * var(--u)) solid var(--line); padding: calc(16 * var(--u)) calc(18 * var(--u)); }
+  .strip > div em { font-style: normal; font-weight: 800; color: var(--accent); margin-right: calc(10 * var(--u)); }
+  .strip > div.hot { background: var(--accent-2); border-color: var(--accent-2); color: var(--paper); }
+  .strip > div.hot em { color: var(--paper); }
+
+  /* 흐름 카드 (원본 '프로그램 구조' 양식) */
+  .flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(30 * var(--u)); }
+  .step { min-height: calc(400 * var(--u)); border: calc(2 * var(--u)) solid var(--line); display: flex; flex-direction: column; position: relative; }
+  .step + .step::before { content: "▶"; position: absolute; left: calc(-24 * var(--u)); top: 45%; font-size: calc(18 * var(--u)); color: var(--line); }
+  .step > header { background: var(--accent); color: var(--paper); font-weight: 700; padding: calc(14 * var(--u)) calc(22 * var(--u)); font-size: calc(22 * var(--u)); }
+  .step.hot > header { background: var(--accent-2); }
+  .step h3 { font-size: calc(30 * var(--u)); margin: calc(20 * var(--u)) calc(22 * var(--u)) calc(10 * var(--u)); padding-bottom: calc(14 * var(--u)); border-bottom: calc(2 * var(--u)) solid var(--line); }
+  .step p { font-size: calc(25 * var(--u)); color: var(--ink); margin: 0 calc(22 * var(--u)) calc(14 * var(--u)) !important; flex: 1; }
+  .step .pill { background: var(--accent-soft); color: var(--accent); font-weight: 700; text-align: center; padding: calc(10 * var(--u)); margin: 0 calc(18 * var(--u)) calc(18 * var(--u)); font-size: calc(22 * var(--u)); }
+  .step.hot .pill { background: var(--hl); color: var(--accent-2); }
+  .cond { margin-top: calc(30 * var(--u)); line-height: 1.6; background: var(--soft); border: calc(2 * var(--u)) solid var(--line); padding: calc(16 * var(--u)) calc(28 * var(--u)); display: grid; grid-template-columns: calc(160 * var(--u)) minmax(0, 1fr); gap: calc(20 * var(--u)); font-size: calc(25 * var(--u)); }
+  .cond b { color: var(--accent); font-size: calc(24 * var(--u)); }
+  .cond ul { padding-left: 1em; }
+  .cond li { margin: 0 0 calc(2 * var(--u)); }
+
+  /* 관통 메시지 바 */
+  .through { margin-top: calc(30 * var(--u)); background: var(--soft); border: calc(2 * var(--u)) solid var(--line); padding: calc(16 * var(--u)) calc(28 * var(--u)); display: flex; gap: calc(30 * var(--u)); align-items: center; font-size: calc(26 * var(--u)); font-weight: 700; }
+  .through b { color: var(--accent); white-space: nowrap; }
+  .through s { color: var(--muted); font-weight: 500; }
+
+  /* 표지 */
+  .slide.cover { padding: 0; display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr); }
+  .slide.cover::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: calc(10 * var(--u)); background: var(--accent); z-index: 1; }
+  .cover .left { padding: calc(130 * var(--u)) calc(90 * var(--u)) calc(70 * var(--u)) calc(120 * var(--u)); display: flex; flex-direction: column; }
+  .cover .tag { align-self: flex-start; border: calc(2 * var(--u)) solid var(--accent); color: var(--accent); font-weight: 700; font-size: calc(24 * var(--u)); padding: calc(10 * var(--u)) calc(22 * var(--u)); margin-bottom: calc(60 * var(--u)) !important; }
+  .cover h1 { font-size: calc(104 * var(--u)); line-height: 1.05; font-weight: 800; color: var(--accent); margin: 0 0 calc(34 * var(--u)); letter-spacing: -.01em; }
+  .cover h1 span { display: block; color: var(--accent-2); }
+  .cover .sub { font-size: calc(36 * var(--u)); font-weight: 700; line-height: 1.45; color: var(--ink); }
+  .cover dl { display: grid; grid-template-columns: calc(150 * var(--u)) minmax(0, 1fr); margin: 0; font-size: calc(24 * var(--u)); border-bottom: calc(3 * var(--u)) solid var(--accent); }
+  .cover dt, .cover dd { margin: 0; padding: calc(12 * var(--u)) 0; border-top: calc(2 * var(--u)) solid var(--line); }
+  .cover dt { font-weight: 700; color: var(--accent); }
+  .cover .right { background: var(--accent); color: var(--paper); padding: calc(130 * var(--u)) calc(70 * var(--u)) calc(70 * var(--u)); display: flex; flex-direction: column; justify-content: space-between; }
+  .cover .right div { border-bottom: calc(2 * var(--u)) solid var(--paper); padding-bottom: calc(14 * var(--u)); }
+  .cover .right div:last-child { border-bottom: 0; }
+  .cover .right b { display: block; font-size: calc(78 * var(--u)); font-weight: 800; line-height: 1.1; }
+  .cover .right b span { font-size: calc(32 * var(--u)); margin-left: calc(6 * var(--u)); }
+  .cover .right p { margin: 0 !important; font-size: calc(23 * var(--u)); opacity: .9; }
+
+  /* 마무리 */
+  .slide.closing { background: var(--accent); color: var(--paper); padding: calc(70 * var(--u)) calc(120 * var(--u)); justify-content: center; }
+  .slide.closing::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: calc(12 * var(--u)); background: var(--accent-2-fill); }
+  .closing .kicker { font-size: calc(24 * var(--u)); font-weight: 700; opacity: .85; margin-bottom: calc(60 * var(--u)) !important; }
+  .closing h1 { font-size: calc(66 * var(--u)); line-height: 1.35; margin: 0 0 calc(30 * var(--u)); }
+  .closing h1 mark { background: var(--accent-2); color: var(--paper); padding: 0 .15em; }
+  .closing .bar { width: calc(110 * var(--u)); height: calc(7 * var(--u)); background: var(--accent-2-fill); margin-bottom: calc(60 * var(--u)); }
+  .closing .boxes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(26 * var(--u)); }
+  .closing .boxes div { border: calc(2 * var(--u)) solid var(--paper); padding: calc(22 * var(--u)) calc(28 * var(--u)); font-size: calc(24 * var(--u)); }
+  .closing .boxes b { display: block; font-size: calc(30 * var(--u)); margin-bottom: calc(6 * var(--u)); }
+  .closing .boxes small { display: block; font-size: calc(22 * var(--u)); opacity: .85; }
+  .closing .foot { margin-top: calc(50 * var(--u)) !important; font-size: calc(22 * var(--u)); opacity: .85; }
+
+  /* 진행 막대·컨트롤은 원본 양식에 맞춰 남색 */
+  @media print { .slide.page::before, .slide.cover::before { position: absolute; } }
+  .slide.page, .slide.cover, .slide.closing { position: relative; }
+  .page-foot { padding-right: calc(250 * var(--u)); }   /* 화면: 넘기기 버튼과 겹치지 않게 */
+  @media print { .page-foot { padding-right: 0; } }
+</style>
+</head>
+<body>
+<main class="deck" aria-roledescription="발표 자료" aria-label="AIRPORT 2035 홍보 전략안">
+  <div class="stage" id="stage">
+    <!-- 1. 표지 -->
+    <section class="slide cover" role="group" aria-roledescription="슬라이드" aria-labelledby="t1">
+      <div class="left">
+        <p class="tag">MICE 기획 제안서 · 홍보 전략안</p>
+        <h1 id="t1">AIRPORT 2035<span>HUMAN REQUIRED</span></h1>
+        <p class="sub">타깃별로 따로 모으고,<br>투표로 행사 전부터 묻는다</p>
+        <div class="spacer"></div>
+        <dl>
+          <dt>본 행사</dt><dd>2027. 9. 9(목) – 11(토) · 송도컨벤시아</dd>
+          <dt>홍보 기간</dt><dd>2026. 12 – 2027. 9 (10개월)</dd>
+          <dt>구성</dt><dd>통합 전략 · 사전 투표 캠페인 · 타깃별 5장</dd>
+        </dl>
+      </div>
+      <div class="right">
+        <div><b>5<span>타깃</span></b><p>해외 · 기업 · 학교 · 대학생 · 시민</p></div>
+        <div><b>30,000<span>건</span></b><p>투표 목표 (본 제안서 기준)</p></div>
+        <div><b>1.1<span>억 원</span></b><p>홍보·마케팅 예산 (지출 계획)</p></div>
+        <div><b>D-10<span>개월</span></b><p>2026. 11 기준</p></div>
+      </div>
+      <aside class="notes">원본 제안서의 수치(투표 30,000건, 홍보비 1.1억 원)를 그대로 쓴 독립 홍보 전략안.</aside>
+    </section>
+
+    <!-- 2. 통합 홍보 전략 -->
+    <section class="slide page" role="group" aria-roledescription="슬라이드" aria-labelledby="t2" data-transition="fade">
+      <div class="page-head"><span class="chap"><i>1</i>통합 전략</span><span>AIRPORT 2035 : HUMAN REQUIRED</span></div>
+      <h2 id="t2"><span class="no">1</span>통합 홍보 전략</h2>
+      <p class="msg">기업·해외는 먼저, 학교·대학생은 봄에, <mark>시민은 마지막에 넓게</mark> 모집합니다.</p>
+      <table class="grid">
+        <thead><tr><th>타깃</th><th>핵심 메시지</th><th>주 채널</th><th>전환 행동</th><th>시작</th></tr></thead>
+        <tbody>
+          <tr><td>기술 기업 40부스</td><td>시민 3만 명의 반응을 데이터로</td><td>1:1 영업 · 로봇산업진흥원</td><td>부스·스폰서 계약</td><td class="em">26.12</td></tr>
+          <tr><td>해외 전문가 140명</td><td>Write the manual with us</td><td>업계 단체 · 연사 SNS · LinkedIn</td><td>얼리버드 등록</td><td class="em">27.1</td></tr>
+          <tr><td>학교 80개교</td><td>2035 공항 직업 카드</td><td>교육청 공문 · 교사 설명회</td><td>단체 예약</td><td class="em">27.3</td></tr>
+          <tr><td>대학생 60명+</td><td>공항 안전 직무를 먼저 경험</td><td>관련 학과 · 파트너 대학</td><td>서포터즈·학생 패스</td><td class="em">27.4</td></tr>
+          <tr><td>시민·가족 15,000명</td><td>당신이라면 로봇에게 맡기겠습니까?</td><td>숏폼 · 공항 사이니지 · 지역 언론</td><td>입장 슬롯 예약</td><td class="em">27.6</td></tr>
+        </tbody>
+      </table>
+      <div class="through"><b>관통 메시지</b><span><s>로봇이 사람을 대체한다</s> → “사람이 넘겨받는 순간”</span></div>
+      <div class="spacer"></div>
+      <p class="footnote">타깃 규모: 본 제안서(컨퍼런스 400명 중 해외 35%, 학교 80개교, 기업 40부스, 시민 15,000명). 홍보비 1.1억 원의 타깃별 배분은 확정 필요.</p>
+      <div class="page-foot"><span>AIRPORT 2035 · 홍보 전략안</span><span>02</span></div>
+      <aside class="notes">순서 근거: 기업 장비·볼거리가 확정돼야 시민 홍보 영상에 담을 수 있음. 관통 메시지는 SWOT 위협('일자리 대체' 프레임)을 홍보 단계에서 미리 차단.</aside>
+    </section>
+
+    <!-- 3. 사전 투표 캠페인 -->
+    <section class="slide page" role="group" aria-roledescription="슬라이드" aria-labelledby="t3">
+      <div class="page-head"><span class="chap"><i>2</i>사전 투표 캠페인</span><span>AIRPORT 2035 : HUMAN REQUIRED</span></div>
+      <h2 id="t3"><span class="no">2</span>사전 투표 캠페인 “당신이라면?”</h2>
+      <p class="msg">행사장의 투표를 <mark>행사 전 온라인</mark>으로 먼저 열어, 홍보·데이터·기사를 함께 만듭니다.</p>
+      <div class="flow">
+        <div class="step"><header>STEP 1 · 27.2 오픈</header><h3>30초 판단 퀴즈</h3><p>위기 5존 상황마다 ‘로봇 / 사람 / 함께’ 선택. 웹·공항 사이니지 QR</p><div class="pill">익명 · 연령대만 수집</div></div>
+        <div class="step"><header>STEP 2 · 27.3–8 매월</header><h3>월간 결과 발표</h3><p>“시민 ○○%, 의심 가방은 사람이 열어야” 형태의 보도자료·숏폼</p><div class="pill">언론 기사 소재</div></div>
+        <div class="step"><header>STEP 3 · 결과 화면</header><h3>예약으로 연결</h3><p>“직접 겪어보세요” 버튼으로 입장·학교·컨퍼런스 예약 연결</p><div class="pill">투표 → 예약 전환</div></div>
+        <div class="step hot"><header>STEP 4 · 9.9–11 현장</header><h3>체험 후 재투표</h3><p>체험 전·후 판단 변화를 비교해 도상훈련 자료와 폐막 발표로</p><div class="pill">투표 30,000건</div></div>
+      </div>
+      <div class="cond"><b>실행 조건</b><ul>
+        <li>웹·예약 시스템 오픈을 27.4–5에서 <b>27.2로 앞당김</b></li>
+        <li>공항 출국장 사이니지·키오스크 투표는 인천국제공항공사 협조 필요 (확인 필요)</li>
+        <li>개인정보는 원안 운영 기준과 동일: QR 익명, 연령대·참가 유형만, 공개는 집계값만</li>
+      </ul></div>
+      <div class="spacer"></div>
+      <div class="page-foot"><span>AIRPORT 2035 · 홍보 전략안</span><span>03</span></div>
+      <aside class="notes">사전 투표 결과는 기업 영업 자료(3-2)와 학교 사전 수업 자료(3-3)로도 재사용.</aside>
+    </section>
+
+    <!-- 4. 해외 전문가 -->
+    <section class="slide page" role="group" aria-roledescription="슬라이드" aria-labelledby="t4">
+      <div class="page-head"><span class="chap"><i>3</i>타깃별 전략</span><span>AIRPORT 2035 : HUMAN REQUIRED</span></div>
+      <h2 id="t4"><span class="no">3-1</span>해외 전문가</h2>
+      <p class="msg">듣는 회의가 아니라 <mark>매뉴얼을 함께 쓰는 회의</mark>라는 점을 9개월 전부터 알립니다.</p>
+      <div class="split">
+        <table class="grid">
+          <thead><tr><th>항목</th><th>내용</th></tr></thead>
+          <tbody>
+            <tr><td>핵심 메시지</td><td>Write the manual with us</td></tr>
+            <tr><td>주 채널</td><td>공항 업계 단체 뉴스레터·행사, 연사 SNS, LinkedIn</td></tr>
+            <tr><td>제공 혜택</td><td>관제 데스크 옵저버 패스, 매뉴얼에 기관명 기재</td></tr>
+            <tr><td>현장 혜택</td><td>9. 8(수) 인천공항 로봇 운영 현장 투어</td></tr>
+            <tr><td>전환 행동</td><td>얼리버드 등록</td></tr>
+          </tbody>
+        </table>
+        <div class="side">
+          <div class="kpi"><small>목표</small><div class="big">140<span>명</span></div><p>컨퍼런스 400명 × 해외 35%</p>
+            <ul><li>5월 말 목표의 50% 등록 (안)</li></ul></div>
+          <div class="first"><b>첫 행동</b>연사 확정 후 영문 Save the Date 1장 제작</div>
+        </div>
+      </div>
+      <div class="strip"><b>일정</b><div><em>27.1</em>Save the Date</div><div><em>27.3</em>얼리버드 오픈</div><div><em>27.6</em>얼리버드 마감</div><div class="hot"><em>9.8</em>현장 투어</div></div>
+      <div class="spacer"></div>
+      <p class="footnote">확인 필요: 국제회의 등록 리드타임 업계 기준(ICCA 등). 섭외 미확정 연사는 홍보물에 이름을 쓰지 않음.</p>
+      <div class="page-foot"><span>AIRPORT 2035 · 홍보 전략안</span><span>04</span></div>
+    </section>
+
+    <!-- 5. 기술 기업 -->
+    <section class="slide page" role="group" aria-roledescription="슬라이드" aria-labelledby="t5">
+      <div class="page-head"><span class="chap"><i>3</i>타깃별 전략</span><span>AIRPORT 2035 : HUMAN REQUIRED</span></div>
+      <h2 id="t5"><span class="no">3-2</span>로봇·안전기술 기업</h2>
+      <p class="msg">부스가 아니라 <mark>시민 반응 데이터</mark>를 파는 것으로 영업 포인트를 바꿉니다.</p>
+      <div class="split">
+        <table class="grid">
+          <thead><tr><th>항목</th><th>내용</th></tr></thead>
+          <tbody>
+            <tr><td>핵심 메시지</td><td>시민 3만 명의 반응을 데이터로 가져가세요</td></tr>
+            <tr><td>주 채널</td><td>1:1 영업, 한국로봇산업진흥원 네트워크</td></tr>
+            <tr><td>영업 자료</td><td>사전 투표 중간 결과 + 데이터 리포트 샘플</td></tr>
+            <tr><td>제공 혜택</td><td>운영 데이터 리포트, B2B 1:1 미팅 사전 매칭</td></tr>
+            <tr><td>전환 행동</td><td>부스·스폰서 계약, 장비 현물 지원</td></tr>
+          </tbody>
+        </table>
+        <div class="side">
+          <div class="kpi"><small>목표</small><div class="big">40<span>부스</span></div><p>부스 1.0억 + 스폰서십 2.0억 원</p>
+            <ul><li>B2B 1:1 미팅 150건</li></ul></div>
+          <div class="first"><b>첫 행동</b>데이터 리포트 샘플이 든 기업용 제안서 1부</div>
+        </div>
+      </div>
+      <div class="strip"><b>일정</b><div><em>26.12</em>영업 시작</div><div><em>27.2</em>1차 계약</div><div><em>27.3–5</em>장비 실증</div><div class="hot"><em>27.6–8</em>미팅 매칭</div></div>
+      <div class="spacer"></div>
+      <p class="footnote">금액·건수: 본 제안서 수입 계획(부스 40 × 평균 250만 원, 스폰서십 2.00억)과 기대효과 표. 1차 계약 시점은 장비 실증 일정에 맞춘 제안.</p>
+      <div class="page-foot"><span>AIRPORT 2035 · 홍보 전략안</span><span>05</span></div>
+    </section>
+
+    <!-- 6. 학교 단체 -->
+    <section class="slide page" role="group" aria-roledescription="슬라이드" aria-labelledby="t6">
+      <div class="page-head"><span class="chap"><i>3</i>타깃별 전략</span><span>AIRPORT 2035 : HUMAN REQUIRED</span></div>
+      <h2 id="t6"><span class="no">3-3</span>학교 단체</h2>
+      <p class="msg">교사가 결정권자입니다. <mark>3월 공문</mark>으로 2학기 체험학습 계획에 먼저 들어갑니다.</p>
+      <div class="split">
+        <table class="grid">
+          <thead><tr><th>항목</th><th>내용</th></tr></thead>
+          <tbody>
+            <tr><td>핵심 메시지</td><td>‘2035 공항 직업 카드’로 미래 직업 체험</td></tr>
+            <tr><td>주 채널</td><td>인천광역시교육청 공문, 진로 교사 설명회</td></tr>
+            <tr><td>교사용 자료</td><td>사전 투표 퀴즈를 활용한 1시간 수업 세트</td></tr>
+            <tr><td>제공 혜택</td><td>단체 무료 입장, 존별 직업 카드 스탬프</td></tr>
+            <tr><td>전환 행동</td><td>단체 예약 (목 오후 / 금 종일)</td></tr>
+          </tbody>
+        </table>
+        <div class="side">
+          <div class="kpi"><small>목표</small><div class="big">80<span>개교</span></div><p>목 30개교 · 금 50개교</p>
+            <ul><li>4월 말 예약 50개교 (안)</li></ul></div>
+          <div class="first"><b>첫 행동</b>교육청 진로 담당에 공문 가능 시기 문의</div>
+        </div>
+      </div>
+      <div class="strip"><b>일정</b><div><em>27.3</em>교육청 공문</div><div><em>27.4</em>교사 설명회</div><div><em>27.5</em>예약 마감</div><div class="hot"><em>9.9–10</em>단체 관람</div></div>
+      <div class="spacer"></div>
+      <p class="footnote">확인 필요: 학교별 2학기 체험학습 계획 확정 시기, 2027년 추석 연휴 날짜. 규모는 본 제안서 대상별 참여 방식 기준.</p>
+      <div class="page-foot"><span>AIRPORT 2035 · 홍보 전략안</span><span>06</span></div>
+    </section>
+
+    <!-- 7. 대학생 -->
+    <section class="slide page" role="group" aria-roledescription="슬라이드" aria-labelledby="t7">
+      <div class="page-head"><span class="chap"><i>3</i>타깃별 전략</span><span>AIRPORT 2035 : HUMAN REQUIRED</span></div>
+      <h2 id="t7"><span class="no">3-4</span>대학생</h2>
+      <p class="msg">서포터즈가 곧 홍보 채널입니다. <mark>숏폼 제작을 대학생이 직접</mark> 맡습니다.</p>
+      <div class="split">
+        <table class="grid">
+          <thead><tr><th>항목</th><th>내용</th></tr></thead>
+          <tbody>
+            <tr><td>핵심 메시지</td><td>공항 안전 직무를 먼저 경험한 사람</td></tr>
+            <tr><td>주 채널</td><td>항공·로봇·안전 학과, 한국항공대·인하공전</td></tr>
+            <tr><td>제공 혜택</td><td>학생 패스 70% 할인, 서포터즈 활동 경력</td></tr>
+            <tr><td>서포터즈 역할</td><td>홍보팀 20명 숏폼 · 현장팀 40명 존 가이드</td></tr>
+            <tr><td>전환 행동</td><td>서포터즈 지원, 학생 패스 등록</td></tr>
+          </tbody>
+        </table>
+        <div class="side">
+          <div class="kpi"><small>목표</small><div class="big">60<span>명</span></div><p>서포터즈 ‘AIRPORT 2035 크루’</p>
+            <ul><li>숏폼 “넘겨받는 순간” 5편</li></ul></div>
+          <div class="first"><b>첫 행동</b>파트너 대학 2곳에 학과 협조 요청</div>
+        </div>
+      </div>
+      <div class="strip"><b>일정</b><div><em>27.4</em>모집 공고</div><div><em>27.5</em>발대식</div><div><em>27.6–8</em>숏폼 제작</div><div class="hot"><em>9.9–11</em>현장 운영</div></div>
+      <div class="spacer"></div>
+      <p class="footnote">규모·할인율: 본 제안서 참가 프로모션(서포터즈 60명, 학생 패스 70%)과 B2C 파트너(한국항공대학교, 인하공업전문대학).</p>
+      <div class="page-foot"><span>AIRPORT 2035 · 홍보 전략안</span><span>07</span></div>
+    </section>
+
+    <!-- 8. 시민·가족 -->
+    <section class="slide page" role="group" aria-roledescription="슬라이드" aria-labelledby="t8">
+      <div class="page-head"><span class="chap"><i>3</i>타깃별 전략</span><span>AIRPORT 2035 : HUMAN REQUIRED</span></div>
+      <h2 id="t8"><span class="no">3-5</span>시민·가족</h2>
+      <p class="msg">질문 하나로 끌어들입니다. <mark>“당신이라면 로봇에게 맡기겠습니까?”</mark></p>
+      <div class="split">
+        <table class="grid">
+          <thead><tr><th>항목</th><th>내용</th></tr></thead>
+          <tbody>
+            <tr><td>핵심 콘텐츠</td><td>숏폼 “넘겨받는 순간” 5편 (탐지견 편 먼저)</td></tr>
+            <tr><td>주 채널</td><td>YouTube·Instagram, 공항 사이니지, 지역 언론</td></tr>
+            <tr><td>입장 방식</td><td>일반 5,000원, 30분 단위 슬롯 예약</td></tr>
+            <tr><td>라이브 회차</td><td>별도 예약, 정원의 120% 접수로 노쇼 대비</td></tr>
+            <tr><td>전환 행동</td><td>사전 투표 → 입장 슬롯 예약</td></tr>
+          </tbody>
+        </table>
+        <div class="side">
+          <div class="kpi"><small>목표</small><div class="big">15,000<span>명</span></div><p>유료 약 8,000명 · 투표 30,000건</p>
+            <ul><li>라이브 노쇼 15% 이하</li></ul></div>
+          <div class="first"><b>첫 행동</b>숏폼 5편 콘티 작성, 탐지견 편부터</div>
+        </div>
+      </div>
+      <div class="strip"><b>일정</b><div><em>27.6</em>숏폼 공개</div><div><em>27.7</em>예약 오픈</div><div><em>27.8</em>투표 결과 보도</div><div class="hot"><em>9.10–11</em>시민 공개</div></div>
+      <div class="spacer"></div>
+      <p class="footnote">수치: 본 제안서 수입 계획(5,000원 × 약 8,000명)·사후강평 기준. 확인 필요: 공항 사이니지 사용 협조, 2027년 추석 연휴 영향.</p>
+      <div class="page-foot"><span>AIRPORT 2035 · 홍보 전략안</span><span>08</span></div>
+    </section>
+
+    <!-- 9. 마무리 -->
+    <section class="slide closing" role="group" aria-roledescription="슬라이드" aria-labelledby="t9" data-transition="zoom">
+      <p class="kicker">AIRPORT 2035 : HUMAN REQUIRED · 홍보 전략안</p>
+      <h1 id="t9">투표로 먼저 만나고,<br><mark>행사장에서 다시 묻습니다.</mark></h1>
+      <div class="bar"></div>
+      <div class="boxes">
+        <div><b>타깃별 모집</b>기업 → 해외 → 학교 → 대학생 → 시민<small>26.12 – 27.8</small></div>
+        <div><b>사전 투표</b>30초 퀴즈 · 월간 결과 보도<small>27.2 오픈</small></div>
+        <div><b>현장 재투표</b>체험 전·후 비교 → 매뉴얼 근거<small>27.9.9 – 11</small></div>
+      </div>
+      <p class="foot">2027. 9. 9 – 11 · 송도컨벤시아 전시 1·2홀 + 회의동</p>
+    </section>
+
+    <div class="progress" aria-hidden="true"><span></span></div>
+    <nav class="controls" aria-label="슬라이드 이동">
+      <button type="button" data-action="prev" aria-label="이전 슬라이드">‹</button>
+      <span class="counter" id="counter" aria-hidden="true"></span>
+      <button type="button" data-action="next" aria-label="다음 슬라이드">›</button>
+      <button type="button" data-action="full" aria-label="전체화면">⛶</button>
+    </nav>
+  </div>
+  <div class="sr-only" id="status" aria-live="polite" aria-atomic="true"></div>
+</main>
+<div class="blackout" aria-hidden="true"></div>
+
+<script>
+(() => {
+  const O = { transition: 'slide', duration: 500, historyMode: 'replace', allowRepeat: false, swipeMin: 40 };
+  const root = document.documentElement;
+  const stage = document.getElementById('stage');
+  const slides = [...stage.querySelectorAll(':scope > .slide')];
+  const status = document.getElementById('status');
+  const counter = document.getElementById('counter');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const n = slides.length;
+  let cur = -1, step = 0, active = null, autoTimer = null;
+
+  // ---------- 원칙 6: steps ----------
+  // numbered groups first (ascending), then unnumbered elements in DOM order; renumbered 1..N
+  function collect(slide) {
+    const byNum = new Map(), free = [];
+    for (const el of slide.querySelectorAll('[data-step]')) {
+      const k = parseInt(el.dataset.step, 10);
+      if (Number.isFinite(k)) (byNum.get(k) || byNum.set(k, []).get(k)).push(el);
+      else free.push([el]);
+    }
+    slide._groups = [...[...byNum.keys()].sort((a, b) => a - b).map(k => byNum.get(k)), ...free];
+    slide._groups.forEach(g => g.forEach((el, j) => el.style.setProperty('--i', j)));
+  }
+  function applyStep(slide, k) {
+    k = Math.max(0, Math.min(k, slide._groups.length));
+    slide._groups.forEach((g, i) => g.forEach(el => {
+      const out = parseInt(el.dataset.stepOut, 10);
+      el.classList.toggle('is-visible', i + 1 <= k && !(Number.isFinite(out) && k >= out));
+      el.classList.toggle('is-current', i + 1 === k);
+    }));
+    return k;
+  }
+  slides.forEach(collect);
+
+  // ---------- 원칙 5: transitions (WAAPI, skip-to-end on new input) ----------
+  const EFFECTS = {
+    fade:  () => ({ out: [{ opacity: 1 }, { opacity: 0 }], in: [{ opacity: 0 }, { opacity: 1 }] }),
+    slide: d => ({ out: [{ transform: 'translateX(0)' }, { transform: `translateX(${-100 * d}%)` }],
+                   in:  [{ transform: `translateX(${100 * d}%)` }, { transform: 'translateX(0)' }] }),
+    zoom:  d => ({ out: [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: `scale(${d > 0 ? 1.5 : 0.6})` }],
+                   in:  [{ opacity: 0, transform: `scale(${d > 0 ? 0.6 : 1.5})` }, { opacity: 1, transform: 'scale(1)' }] }),
+  };
+  function swap(from, to) {
+    if (active) active.done();
+    slides.forEach((s, i) => { s.inert = i !== to; });
+    const inEl = slides[to], outEl = slides[from];
+    if (!outEl) { inEl.classList.add('is-current'); return; }            // first render: no animation
+    let name = inEl.dataset.transition || O.transition, duration = O.duration;
+    if (reduce.matches) { name = 'fade'; duration = 150; }
+    const fx = (EFFECTS[name] || EFFECTS.fade)(to > from ? 1 : -1);
+    stage.dataset.animating = '';
+    outEl.classList.remove('is-current');
+    outEl.classList.add('is-outgoing');
+    inEl.classList.add('is-incoming');
+    outEl.style.willChange = inEl.style.willChange = 'transform, opacity';
+    const opts = { duration, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' };
+    const anims = [outEl.animate(fx.out, opts), inEl.animate(fx.in, opts)];
+    const t = {
+      done() {                                                            // idempotent
+        if (active !== t) return;
+        active = null;
+        clearTimeout(t.timer);
+        outEl.classList.remove('is-outgoing');
+        inEl.classList.remove('is-incoming');
+        inEl.classList.add('is-current');
+        outEl.style.willChange = inEl.style.willChange = '';
+        delete stage.dataset.animating;
+        anims.forEach(a => a.cancel());
+      },
+    };
+    active = t;
+    t.timer = setTimeout(t.done, duration + 200);                         // safety net
+    Promise.all(anims.map(a => a.finished)).then(t.done)
+      .catch(e => { if (e.name !== 'AbortError') console.error(e); });
+  }
+
+  // ---------- render ----------
+  function show(i, k, { fromUser = true } = {}) {
+    i = Math.max(0, Math.min(i, n - 1));
+    const changed = i !== cur, prevStep = step;
+    if (changed) swap(cur, i);
+    cur = i;
+    step = applyStep(slides[i], k);
+    if (!changed && step === prevStep) return;
+    root.style.setProperty('--progress', n > 1 ? i / (n - 1) : 0);
+    counter.textContent = `${i + 1} / ${n}`;
+    const text = changed
+      ? `슬라이드 ${i + 1} / ${n}: ${slides[i].querySelector('h1, h2')?.textContent.trim() ?? ''}`
+      : step > prevStep ? slides[i]._groups[step - 1].map(el => el.textContent.trim()).join(' ') : '';
+    if (text) requestAnimationFrame(() => { status.textContent = text; });
+    writeHash(changed && fromUser);
+    updateLive();
+    if (changed) startAutoplay(slides[i]);
+  }
+  function next() {
+    stopAutoplay();
+    if (step < slides[cur]._groups.length) show(cur, step + 1);
+    else if (cur < n - 1) show(cur + 1, 0);
+  }
+  function prev() {
+    stopAutoplay();
+    if (step > 0) show(cur, step - 1);
+    else if (cur > 0) show(cur - 1, Infinity);                            // previous slide: all steps visible
+  }
+
+  // ---------- 원칙 7: URL hash #/3 or #/3.2 (1-based slide) ----------
+  function readHash() {
+    const m = /^#\/(\d+)(?:\.(\d+))?$/.exec(location.hash);
+    return m ? [parseInt(m[1], 10) - 1, m[2] ? parseInt(m[2], 10) : 0] : [0, 0];
+  }
+  function writeHash(push) {
+    const hash = `#/${cur + 1}${step ? '.' + step : ''}`;
+    if (location.hash === hash) return;
+    try {
+      if (O.historyMode === 'push' && push) history.pushState(null, '', hash);
+      else history.replaceState(null, '', hash);
+    } catch { /* SecurityError when called too often, or file:// restrictions */ }
+  }
+  const onUrl = () => { const [i, k] = readHash(); show(i, k, { fromUser: false }); };
+
+  // ---------- 원칙 7: keyboard ----------
+  const EDITABLE = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) root.requestFullscreen?.().catch(() => {});
+    else document.exitFullscreen?.();
+  }
+  function onKey(e) {
+    if (e.defaultPrevented || e.isComposing || e.keyCode === 229) return;  // IME composition
+    if (e.ctrlKey || e.metaKey || e.altKey) return;                        // browser shortcuts
+    const t = e.target;
+    if (t.closest?.(EDITABLE)) return;
+    if ((e.key === ' ' || e.key === 'Enter') && t.closest?.('button, a, summary')) return;
+    let action = null, nav = true;
+    switch (e.key) {
+      case 'ArrowRight': case 'ArrowDown': case 'PageDown': action = next; break;
+      case 'ArrowLeft':  case 'ArrowUp':   case 'PageUp':   action = prev; break;
+      case ' ':    action = e.shiftKey ? prev : next; break;
+      case 'Home': action = () => { stopAutoplay(); show(0, 0); }; break;
+      case 'End':  action = () => { stopAutoplay(); show(n - 1, Infinity); }; break;
+      case '.':    action = () => root.classList.toggle('is-black'); nav = false; break;
+      default:
+        if (e.code === 'KeyN') action = next;                              // physical key: works in Korean IME state
+        else if (e.code === 'KeyP') action = prev;
+        else if (e.code === 'KeyB') { action = () => root.classList.toggle('is-black'); nav = false; }
+        else if (e.code === 'KeyF') { action = toggleFullscreen; nav = false; }
+    }
+    if (!action) return;                                                    // unhandled key: keep default
+    e.preventDefault();                                                     // stop page scroll even on repeat
+    if (e.repeat && !O.allowRepeat) return;
+    if (nav) root.classList.remove('is-black');
+    action();
+  }
+
+  // ---------- 원칙 7: swipe (touch only) ----------
+  let start = null;
+  function onDown(e) {
+    if (e.pointerType !== 'touch') return;
+    if (start) { start = null; return; }                                   // second finger: cancel
+    if (e.target.closest('[data-prevent-swipe], video[controls], audio[controls]')) return;
+    start = { id: e.pointerId, x: e.clientX, y: e.clientY, t: e.timeStamp };
+  }
+  function onUp(e) {
+    if (!start || e.pointerId !== start.id) return;
+    const dx = e.clientX - start.x, dy = e.clientY - start.y, dt = e.timeStamp - start.t;
+    start = null;
+    if (Math.abs(dx) < Math.max(O.swipeMin, stage.clientWidth * 0.08) || Math.abs(dx) < Math.abs(dy) * 1.2 || dt > 600) return;
+    dx < 0 ? next() : prev();
+  }
+
+  // ---------- 원칙 6: autoplay <section data-autoplay="900"> ----------
+  function startAutoplay(slide) {
+    stopAutoplay();
+    const ms = parseInt(slide.dataset.autoplay, 10);
+    if (!ms) return;
+    if (reduce.matches) { step = applyStep(slide, Infinity); writeHash(false); updateLive(); return; }
+    const tick = () => {
+      if (slides[cur] === slide && step < slide._groups.length) { show(cur, step + 1); autoTimer = setTimeout(tick, ms); }
+    };
+    autoTimer = setTimeout(tick, ms);
+  }
+  function stopAutoplay() { clearTimeout(autoTimer); autoTimer = null; }
+
+  function updateLive() {}
+
+  // ---------- bind ----------
+  document.addEventListener('keydown', onKey);
+  addEventListener('hashchange', onUrl);
+  addEventListener('popstate', onUrl);
+  stage.addEventListener('pointerdown', onDown, { passive: true });
+  stage.addEventListener('pointerup', onUp, { passive: true });
+  stage.addEventListener('pointercancel', () => { start = null; }, { passive: true });
+  document.querySelector('.controls').addEventListener('click', e => {
+    const a = e.target.closest('[data-action]')?.dataset.action;
+    if (a === 'next') next();
+    else if (a === 'prev') prev();
+    else if (a === 'full') toggleFullscreen();
+  });
+
+  // ---------- 원칙 10: print = every slide, every step ----------
+  addEventListener('beforeprint', () => {
+    if (active) active.done();
+    slides.forEach(s => { s.inert = false; applyStep(s, Infinity); });
+  });
+  addEventListener('afterprint', () => {
+    slides.forEach((s, i) => { s.inert = i !== cur; applyStep(s, i === cur ? step : 0); });
+  });
+
+  onUrl();
+  writeHash(false);                                                         // normalize URL without adding history
+})();
+</script>
+</body>
+</html>

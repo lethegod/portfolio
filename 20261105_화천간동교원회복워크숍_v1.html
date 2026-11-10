@@ -1,0 +1,1187 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>화천 간동 교원 회복 워크숍</title>
+<!--
+  ppt-slide 템플릿. 사용법은 SKILL.md.
+  - 색은 :root 팔레트 블록만 바꾼다 (승인된 팔레트).
+  - 슬라이드는 <section class="slide"> 를 복사해 내용만 바꾼다. 엔진 CSS·JS는 고치지 않는다.
+  - 모든 크기는 calc(N * var(--u)) — 1920x1080 시안 기준 px.
+-->
+<script>document.documentElement.classList.add('js')</script>
+<style>
+  /* ===== 팔레트: 주제별로 이 블록만 바꾼다 (ppt-research.md 2-6) =====
+     승인된 팔레트 이름: A안 · 원본 진초록·크림·주황 (흰 바탕)
+     글자 토큰(ink·muted·accent·accent-2·good·bad)은 paper·accent-soft 위에서 4.5:1 이상 */
+  :root {
+    --bg: #0f1b17;            /* 레터박스 띠 (무대 밖) */
+    --paper: #ffffff;         /* 슬라이드 배경 */
+    --ink: #1e2522;           /* 본문 글자 */
+    --muted: #57635d;         /* 보조 글자·출처 */
+    --line: #d9e3df;          /* 구분선·테두리 (장식) */
+    --soft: #f1f5f3;          /* 코드·막대 바탕 */
+    --accent: #00735a;        /* 주 강조: 제목 위 라벨, 진행 막대, 선택 행 */
+    --accent-soft: #e6f0ec;   /* 주 강조의 연한 바탕 */
+    --accent-2: #a84a17;      /* 보조 강조: 두 번째 계열 */
+    --good: #00735a;          /* 긍정·권장 */
+    --bad: #a8342a;           /* 부정·주의 */
+    --hl: #fff2c0;
+    --on-accent: #fff2c0;     /* 초록 간지 위 크림 글자 (5.20:1) */            /* 형광펜 스텝 */
+    /* ===== 팔레트 끝 ===== */
+    --step-dur: .4s;
+    --step-gap: 80ms;
+    --progress: 0;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }   /* iOS 가로 모드 글자 자동 확대 방지 */
+  body {
+    background: var(--bg);
+    display: grid;
+    place-items: center;
+    height: 100vh; height: 100dvh;
+    overflow: hidden;
+    font-family: system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  }
+
+  /* ---------- 원칙 1·2: 16:9 무대 ---------- */
+  .stage {
+    /* 너비·높이를 둘 다 명시: aspect-ratio 없이도 항상 16:9 */
+    width:  min(100vw, 100vh * 16 / 9);
+    height: min(100vh, 100vw * 9 / 16);
+    width:  min(100vw, 100dvh * 16 / 9);
+    height: min(100dvh, 100vw * 9 / 16);
+    --u: min(100vw / 1920, 100vh / 1080);     /* 1920px 시안의 1px */
+    position: relative;
+    overflow: hidden;                         /* 내용이 넘쳐도 무대 크기는 그대로 */
+    display: grid;
+    grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+    touch-action: pan-y pinch-zoom;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  @supports (height: 100dvh) {
+    .stage { --u: min(100vw / 1920, 100dvh / 1080); }
+  }
+
+  /* ---------- 원칙 3·4: 겹치기 + 숨김 ---------- */
+  .slide {
+    grid-area: 1 / 1;
+    overflow: hidden;
+    padding: calc(84 * var(--u)) calc(112 * var(--u)) calc(72 * var(--u));
+    font-size: calc(32 * var(--u));
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    background: var(--paper);                 /* 불투명: 아래 장의 잔상이 비치지 않게 */
+  }
+  .js .slide { visibility: hidden; }
+  .js .slide.is-current,
+  .js .slide.is-outgoing,
+  .js .slide.is-incoming { visibility: visible; }
+  .slide.is-outgoing { z-index: 1; }
+  .slide.is-incoming, .slide.is-current { z-index: 2; }
+  .stage[data-animating] .slide { pointer-events: none; }
+  html:not(.js) .slide:not(:first-child) { display: none; }    /* JS 꺼짐: 첫 장만 */
+
+  /* ---------- 공통 타이포 ---------- */
+  .eyebrow { color: var(--accent); font-weight: 700; font-size: calc(24 * var(--u)); letter-spacing: .04em; margin: 0 0 calc(10 * var(--u)); }
+  .slide h1 { font-size: calc(92 * var(--u)); line-height: 1.15; margin: 0 0 calc(28 * var(--u)); }
+  .slide h2 { font-size: calc(60 * var(--u)); line-height: 1.2; margin: 0 0 calc(36 * var(--u)); }
+  .slide h3 { font-size: calc(30 * var(--u)); margin: 0 0 calc(14 * var(--u)); }
+  .slide p  { margin: 0 0 calc(16 * var(--u)); }
+  .slide ul, .slide ol { margin: 0; padding-left: 1.2em; }
+  .slide li { margin: 0 0 calc(10 * var(--u)); }
+  .muted { color: var(--muted); }
+  .spacer { flex: 1; }
+  .footnote { font-size: calc(20 * var(--u)); color: var(--muted); margin: calc(16 * var(--u)) 0 0 !important; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: calc(52 * var(--u)); align-items: start; }
+  .ok { color: var(--good); font-weight: 700; }
+  .no { color: var(--bad); font-weight: 700; }
+
+  code, pre, kbd, .live { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  pre {
+    margin: 0; padding: calc(26 * var(--u)) calc(30 * var(--u));
+    background: var(--soft); border-radius: calc(14 * var(--u));
+    font-size: calc(24 * var(--u)); line-height: 1.6; white-space: pre; overflow: hidden;
+  }
+  kbd {
+    display: inline-block; min-width: 1.8em; text-align: center;
+    padding: 0 .4em; border: calc(2 * var(--u)) solid var(--line);
+    border-bottom-width: calc(4 * var(--u)); border-radius: calc(8 * var(--u));
+    font-size: .85em; background: var(--paper);
+  }
+  .live { color: var(--accent); font-weight: 700; }
+
+  .callout {
+    background: var(--accent-soft);
+    border-left: calc(8 * var(--u)) solid var(--accent);
+    border-radius: calc(14 * var(--u));
+    padding: calc(26 * var(--u)) calc(32 * var(--u));
+    font-size: calc(28 * var(--u));
+  }
+  .callout h3 { color: var(--accent); }
+  .callout ul { padding-left: 1em; }
+
+  table { border-collapse: collapse; width: 100%; font-size: calc(26 * var(--u)); }
+  th, td { text-align: left; padding: calc(12 * var(--u)) calc(18 * var(--u)); border-bottom: calc(2 * var(--u)) solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  tr.pick td { background: var(--accent-soft); font-weight: 600; }
+
+  .map { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(14 * var(--u)) calc(48 * var(--u)); font-size: calc(27 * var(--u)); }
+  .map div { display: grid; grid-template-columns: calc(150 * var(--u)) 1fr calc(110 * var(--u)); gap: calc(14 * var(--u)); padding: calc(12 * var(--u)) 0; border-bottom: calc(2 * var(--u)) solid var(--line); }
+  .map b { color: var(--accent); }
+  .map span:last-child { color: var(--muted); text-align: right; }
+
+  .cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(28 * var(--u)); }
+  .cards.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .card { border: calc(2 * var(--u)) solid var(--line); border-radius: calc(18 * var(--u)); padding: calc(28 * var(--u)); font-size: calc(26 * var(--u)); }
+  .card b { display: block; font-size: calc(34 * var(--u)); margin-bottom: calc(8 * var(--u)); }
+  .card.pick { border-color: var(--accent); }
+
+  .timeline { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(24 * var(--u)); }
+  .timeline div { border-top: calc(8 * var(--u)) solid var(--accent); padding-top: calc(18 * var(--u)); font-size: calc(28 * var(--u)); }
+  .timeline b { display: block; font-size: calc(40 * var(--u)); }
+
+  /* ---------- 이 발표 전용 레이아웃 (색은 팔레트 토큰만) ---------- */
+  .slide.section { background: var(--accent); color: var(--on-accent); justify-content: center; }
+  .slide.section .eyebrow, .slide.section .muted, .slide.section .footnote { color: var(--on-accent); }
+  .slide.section h1 { color: var(--paper); }
+  .slide.section .muted { font-size: calc(34 * var(--u)); }
+  .num { font-size: calc(200 * var(--u)); font-weight: 800; line-height: 1; margin: 0 0 calc(20 * var(--u)) !important; color: var(--on-accent); }
+  .cols.half { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cards.five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .card .eyebrow { margin-bottom: calc(4 * var(--u)); }
+  .card ul, .card ol { padding-left: 1.1em; margin-top: calc(8 * var(--u)); }
+  .card li { margin-bottom: calc(6 * var(--u)); }
+  .card p { margin-bottom: calc(8 * var(--u)); }
+  .card.solid { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+  .card.solid .eyebrow, .card.solid .muted { color: var(--on-accent); }
+  .card .big { display: block; font-size: calc(58 * var(--u)); font-weight: 800; line-height: 1.1; margin-bottom: calc(10 * var(--u)); color: var(--accent); }
+  .card.solid .big { color: var(--on-accent); }
+  .quote { color: var(--accent); font-weight: 700; }
+  .callout p:last-child { margin-bottom: 0; }
+  table.tt td.t { white-space: nowrap; color: var(--muted); }
+  .bars { display: grid; gap: calc(16 * var(--u)); font-size: calc(26 * var(--u)); }
+  .bars div { display: grid; grid-template-columns: calc(390 * var(--u)) minmax(0, 1fr) calc(70 * var(--u)); align-items: center; gap: calc(14 * var(--u)); }
+  .bars i { display: block; height: calc(34 * var(--u)); width: calc(var(--v) / 5 * 100%); background: var(--accent-2); border-radius: calc(6 * var(--u)); }
+  .bars b { color: var(--accent-2); }
+  .src { font-size: calc(20 * var(--u)); color: var(--muted); word-break: break-all; }
+  .src h3 { color: var(--ink); }
+  .src li { margin-bottom: calc(6 * var(--u)); }
+  /* 카드 제목(b)만 크게, 목록·문단 안의 굵은 글자는 본문 크기 */
+  .card li b, .card p b { display: inline; font-size: inherit; margin: 0; }
+  .slide th { white-space: nowrap; }
+  /* 가독성: 시간표·막대·KPI를 크게 */
+  table.tt { font-size: calc(30 * var(--u)); }
+  table.tt th, table.tt td { padding: calc(18 * var(--u)) calc(20 * var(--u)); }
+  .bars { gap: calc(30 * var(--u)); font-size: calc(30 * var(--u)); }
+  .bars div { grid-template-columns: calc(470 * var(--u)) minmax(0, 1fr) calc(80 * var(--u)); }
+  .bars i { height: calc(46 * var(--u)); }
+  .cards.five .card { padding: calc(52 * var(--u)) calc(28 * var(--u)); font-size: calc(28 * var(--u)); }
+  .cards.five .card .big { font-size: calc(76 * var(--u)); margin-bottom: calc(20 * var(--u)); }
+  /* 번호·버튼: 초록 간지 위에서도 보이게 바탕 깔기 */
+  .controls { background: var(--paper); padding: calc(6 * var(--u)) calc(10 * var(--u)); border-radius: calc(14 * var(--u)); opacity: .85; }
+
+  .notes { display: none; }
+
+  /* ---------- 원칙 6: 빌드 스텝 ---------- */
+  /* 스텝 전환은 현재 장에서만 켠다. 장이 숨겨질 때 스텝이 visibility 전환 때문에
+     0.4초 더 보이는 잔상(9→10장)을 막기 위해서다. 장이 나가기 시작하면 is-current가
+     빠지므로 스텝은 슬라이드와 함께 즉시 숨겨진다. */
+  .js .slide.is-current [data-step] {
+    transition: opacity var(--step-dur) ease, transform var(--step-dur) ease,
+                visibility var(--step-dur), background-size var(--step-dur) ease;
+  }
+  .js [data-step]:not(.is-visible):not([data-effect="highlight"]):not([data-effect="strike"]) {
+    opacity: 0; visibility: hidden;
+  }
+  .js .slide.is-current [data-step].is-visible { transition-delay: calc(var(--i, 0) * var(--step-gap)); }   /* stagger: 나타날 때만 */
+  .js [data-effect="fade-up"], .js [data-effect="grow"] { display: inline-block; }
+  .js p[data-effect], .js .card[data-effect], .js .timeline > [data-effect] { display: block; }
+  .js li[data-effect] { display: list-item; }
+  .js [data-effect="fade-up"]:not(.is-visible) { transform: translateY(1em); }
+  .js [data-effect="grow"]:not(.is-visible)    { transform: scale(.85); }
+  [data-effect="highlight"] {
+    background: linear-gradient(var(--hl), var(--hl)) no-repeat 0 100% / 0% 100%;
+    color: inherit;
+  }
+  .js [data-effect="highlight"].is-visible { background-size: 100% 100%; }
+  .js [data-effect="strike"].is-visible    { text-decoration: line-through; opacity: .55; }
+
+  /* ---------- 원칙 7: 진행 막대·번호 (무대 안) ---------- */
+  .progress { position: absolute; left: 0; right: 0; bottom: 0; height: calc(8 * var(--u)); background: var(--soft); z-index: 5; }
+  .progress > span {
+    display: block; height: 100%; background: var(--accent);
+    transform: scaleX(var(--progress)); transform-origin: 0 50%;
+    transition: transform .3s ease;
+  }
+  /* 버튼·번호도 무대 안에 두고 --u로 크기 지정: 어떤 창에서도 같은 자리 */
+  .controls {
+    position: absolute; right: calc(32 * var(--u)); bottom: calc(18 * var(--u)); z-index: 5;
+    display: flex; align-items: center; gap: calc(10 * var(--u));
+    opacity: .6; transition: opacity .2s;
+  }
+  .controls:hover, .controls:focus-within { opacity: 1; }
+  .controls button {
+    width: calc(44 * var(--u)); height: calc(44 * var(--u)); padding: 0;
+    border-radius: calc(10 * var(--u)); border: calc(2 * var(--u)) solid var(--line);
+    background: var(--paper); color: var(--ink);
+    font: calc(24 * var(--u))/1 system-ui, sans-serif; cursor: pointer;
+  }
+  .controls button:focus-visible { outline: calc(3 * var(--u)) solid var(--accent); outline-offset: calc(3 * var(--u)); }
+  .counter { margin: 0 calc(6 * var(--u)); font-size: calc(22 * var(--u)); color: var(--muted); min-width: 3.5em; text-align: center; }
+
+  /* 화면 끄기 ( . 또는 B ) */
+  .blackout { position: fixed; inset: 0; background: #000; z-index: 30; display: none; }
+  html.is-black .blackout { display: block; }
+
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  /* ---------- 원칙 9: 모션 축소 ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    .js [data-step] { transform: none !important; }
+    .js .slide.is-current [data-step] {
+      transition: opacity .15s linear, visibility .15s, background-size 0s !important;
+      transition-delay: 0s !important;
+    }
+    .progress > span { transition: none; }
+  }
+
+  /* ---------- 원칙 10: 인쇄 = 1장 1페이지, 16:9 용지 ---------- */
+  @page { size: 16in 9in; margin: 0; }
+  @media print {
+    html, body { display: block; height: auto; overflow: visible; background: none; }
+    .stage { display: block; width: 16in; height: auto; overflow: visible; --u: calc(16in / 1920); }
+    .slide, .js .slide, html:not(.js) .slide:not(:first-child) {
+      display: flex; visibility: visible !important; opacity: 1 !important; transform: none !important;
+      width: 16in; height: 9in; break-after: page;
+    }
+    section.slide:last-of-type { break-after: auto; }
+    .js [data-step] { opacity: 1 !important; visibility: visible !important; transform: none !important; transition: none !important; }
+    .progress, .controls, .blackout, .sr-only { display: none !important; }   /* 마지막 빈 페이지 방지 */
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<main class="deck" aria-roledescription="발표 자료" aria-label="화천 간동 교원 회복 워크숍">
+  <div class="stage" id="stage">
+
+    <!-- 1 표지 -->
+    <section class="slide section" role="group" aria-roledescription="슬라이드" aria-labelledby="t1" data-transition="fade">
+      <p class="eyebrow">로컬콘텐츠 개발 · C조 · 교원 회복 워크숍 기획안</p>
+      <h1 id="t1">돌보는 사람을<br>돌보는 동네, 화천 간동</h1>
+      <p class="muted">강원 교원 40명 · 8월 중순 평일 1박 2일 · 화천군 간동면 일대</p>
+      <p class="footnote">작성 이진기 · 이한성 · 오유택 · 배근영</p>
+    </section>
+
+    <!-- 2 한눈에 보기 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t2">
+      <p class="eyebrow">한눈에 보기</p>
+      <h2 id="t2">버티게 하는 연수가 아니라, 회복하게 하는 연수</h2>
+      <table>
+        <tbody>
+          <tr><th>행사명</th><td>화천 간동 교원 회복 워크숍</td></tr>
+          <tr><th>일시</th><td>8월 중순 평일 1박 2일 (예: 8월 18~19일)</td></tr>
+          <tr><th>장소</th><td>강원특별자치도 화천군 간동면 일대</td></tr>
+          <tr><th>대상</th><td>강원 교원 40명 (A조·B조 각 20명)</td></tr>
+          <tr><th>운영</th><td>로컬콘텐츠 C조 · 간동면 협력처 · 상담사 1명</td></tr>
+          <tr><th>구매자</th><td>강원특별자치도교육청</td></tr>
+          <tr class="pick"><th>무엇이 다른가</th><td>몸을 쓰는 지역 체험 · 예산 60% 이상 간동면 지출 · 사전→직후→1개월 후 3회 측정</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 3 목차 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t3">
+      <p class="eyebrow">목차</p>
+      <h2 id="t3">여섯 가지 질문에 차례로 답합니다</h2>
+      <div class="map">
+        <div><b>01</b><span>왜 필요한가</span><span>4장</span></div>
+        <div><b>04</b><span>1박 2일 프로그램</span><span>19장</span></div>
+        <div><b>02</b><span>누구를 위한 워크숍인가</span><span>11장</span></div>
+        <div><b>05</b><span>어떻게 안전하게 운영하나</span><span>28장</span></div>
+        <div><b>03</b><span>왜 화천 간동, 왜 8월인가</span><span>15장</span></div>
+        <div><b>06</b><span>무엇으로 성과를 증명하나</span><span>34장</span></div>
+      </div>
+    </section>
+
+    <!-- 4 간지 01 -->
+    <section class="slide section" role="group" aria-roledescription="슬라이드" aria-labelledby="t4" data-transition="zoom">
+      <p class="num">01</p>
+      <h1 id="t4">왜 필요한가</h1>
+      <p class="muted">교사는 매일 학생을 돌보지만, 정작 자신을 돌볼 시간은 거의 없다</p>
+    </section>
+
+    <!-- 5 우울증 진료 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t5" data-transition="fade">
+      <p class="eyebrow">01 왜 필요한가 · 지표 ①</p>
+      <h2 id="t5">교원 우울증 진료, 3년 새 최대 67.6% 증가</h2>
+      <table>
+        <thead><tr><th>교육기관</th><th>2021</th><th>2022</th><th>2023</th><th>2024</th><th>증가율</th></tr></thead>
+        <tbody>
+          <tr><td>초등학교</td><td>5,637</td><td>7,141</td><td>9,124</td><td>9,446</td><td class="no">67.6%</td></tr>
+          <tr><td>중등 교육기관 (기술·직업 포함)</td><td>2,891</td><td>3,449</td><td>4,054</td><td>4,404</td><td class="no">52.3%</td></tr>
+        </tbody>
+      </table>
+      <p class="footnote" style="margin-bottom: calc(32 * var(--u)) !important">우울증·재발성 우울장애(F32, F33) 진료 인원 · 단위: 명 · 자료: 교육부 / 김대식 의원실</p>
+      <div class="cards three">
+        <div class="card" data-step="1" data-effect="fade-up"><b>우울증 진료 증가</b>초등교원 67.6%, 중등교원 52.3% (2021→2024년)</div>
+        <div class="card" data-step="1" data-effect="fade-up"><b>불안장애 진료 증가</b>초등교원 33.5% (2021→2024년)</div>
+        <div class="card pick" data-step="1" data-effect="fade-up"><b>회복 지원이 필요하다</b>정신건강 관리와 정서적 회복을 위한 맞춤형 지원</div>
+      </div>
+    </section>
+
+    <!-- 6 직무스트레스 점수 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t6">
+      <p class="eyebrow">01 왜 필요한가 · 지표 ②</p>
+      <h2 id="t6">가장 큰 스트레스는 '교육활동 보호 부족'</h2>
+      <div class="cols">
+        <div class="bars" aria-label="직무스트레스 점수, 5점 만점">
+          <div><span>교육활동의 법적 보호 부족</span><i style="--v: 4.58"></i><b>4.58</b></div>
+          <div><span>학생생활지도</span><i style="--v: 4.49"></i><b>4.49</b></div>
+          <div><span>문제행동이 심한 학생</span><i style="--v: 4.43"></i><b>4.43</b></div>
+          <div><span>하루 일과 후 진이 빠짐</span><i style="--v: 4.38"></i><b>4.38</b></div>
+          <div><span>업무로 몸과 마음이 지침</span><i style="--v: 4.14"></i><b>4.14</b></div>
+          <div><span>다음 날 다시 일해야 하는 피로감</span><i style="--v: 4.11"></i><b>4.11</b></div>
+        </div>
+        <div class="callout">
+          <h3>세 가지로 읽으면</h3>
+          <ul>
+            <li data-step><b>보호 부족</b>이 4.58점으로 1위</li>
+            <li data-step><b>생활지도</b> 4.49점, 문제행동 학생 4.43점</li>
+            <li data-step><b>소진</b>: 일과 후 탈진감 4.38점, 피로감 4.14점</li>
+          </ul>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <p class="footnote">5점 만점 · 점수가 높을수록 해당 문항에 높은 수준으로 응답 · 자료: 이데일리 보도</p>
+    </section>
+
+    <!-- 7 원인 변화 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t7" data-transition="fade">
+      <p class="eyebrow">01 왜 필요한가 · 지표 ③</p>
+      <h2 id="t7">학부모 민원이 스트레스 원인 1위로 올라섰다</h2>
+      <div class="cols">
+        <table>
+          <thead><tr><th>원인 (4점 척도)</th><th>2018</th><th>2024</th><th>변화</th></tr></thead>
+          <tbody>
+            <tr class="pick"><td>학부모 민원 대응</td><td>2.42</td><td>2.75</td><td class="no">+0.33</td></tr>
+            <tr><td>특수학생 수업 조정</td><td>1.38</td><td>1.63</td><td>+0.25</td></tr>
+            <tr><td>채점·평가</td><td>1.93</td><td>2.13</td><td>+0.20</td></tr>
+            <tr><td>학업성취 책임</td><td>2.11</td><td>2.22</td><td>+0.11</td></tr>
+            <tr><td>수업 시간</td><td>2.03</td><td>2.10</td><td>+0.07</td></tr>
+            <tr><td>행정업무</td><td>2.59</td><td>2.58</td><td>−0.01</td></tr>
+          </tbody>
+        </table>
+        <div class="callout" data-step>
+          <h3>무엇이 달라졌나</h3>
+          <p>학부모 민원 대응은 11개 원인 중 <b>2024년 점수(2.75)와 상승 폭(+0.33)이 모두 가장 높다.</b></p>
+          <p>채점·평가와 특수학생 수업 조정 부담도 함께 올랐다.</p>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <p class="footnote">11개 원인 중 상승 폭 상위 5개와 행정업무 표시 · 자료: 2026년 학술연구 [그림 Ⅳ-1-11] 직무스트레스 원인(2018년, 2024년)</p>
+    </section>
+
+    <!-- 8 누가 더 지쳐 있나 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t8" data-transition="fade">
+      <p class="eyebrow">01 왜 필요한가 · 지표 ④</p>
+      <h2 id="t8">40대·중견 교사, 큰 도시 학교가 가장 지쳐 있다</h2>
+      <div class="cols">
+        <table>
+          <thead><tr><th>구분</th><th>스트레스 수준</th><th>학부모 민원 대응</th></tr></thead>
+          <tbody>
+            <tr class="pick"><td>40~49세</td><td>2.61</td><td>2.87</td></tr>
+            <tr class="pick"><td>경력 11~20년</td><td>2.61</td><td>2.85</td></tr>
+            <tr><td>대도시</td><td>2.52</td><td>2.81</td></tr>
+            <tr><td>학생 750명 이상 학교</td><td>2.56</td><td>2.95</td></tr>
+            <tr><td class="muted">비교: 읍면지역</td><td class="muted">2.38</td><td class="muted">2.33</td></tr>
+            <tr><td class="muted">비교: 250명 미만 학교</td><td class="muted">2.44</td><td class="muted">2.32</td></tr>
+          </tbody>
+        </table>
+        <div class="callout">
+          <h3>페르소나의 근거</h3>
+          <ul>
+            <li>스트레스 수준은 40대·11~20년 차가 2.61점으로 연령·경력 그룹 중 가장 높다</li>
+            <li>학부모 민원은 750명 이상 학교 2.95점, 대도시 2.81점</li>
+            <li>그래서 참가자 페르소나를 <b>춘천 대규모 학교의 40대 담임교사</b>로 잡았다 (13장)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <p class="footnote">일부 그룹만 표시 · 자료: 2026년 학술연구 〈표 Ⅳ-1-2〉 교사·학교 배경 변인에 따른 직무스트레스</p>
+    </section>
+
+    <!-- 9 다른 교육청 사례 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t9">
+      <p class="eyebrow">01 왜 필요한가 · 선행 사례</p>
+      <h2 id="t9">교원 회복 연수의 수요는 이미 확인됐다</h2>
+      <div class="cards three">
+        <div class="card" data-step="1" data-effect="fade-up">
+          <p class="eyebrow">경북농업기술원 × 대구교육청</p><b>마음챙김 치유농업 연수</b>
+          <ul><li>2023~2026년 대구·경북 교직원</li><li>텃밭·원예·치유농업 활용</li><li>2026년 10기, 총 176명 운영 계획</li></ul>
+        </div>
+        <div class="card" data-step="1" data-effect="fade-up">
+          <p class="eyebrow">경북교육청</p><b>에듀힐링 휴(休) 캠프</b>
+          <ul><li>2025년 교원 50명, 2회</li><li>숲 치유·명상·아로마·상담 1박 2일</li><li>2026년 울진·영주 2회, 총 48명</li></ul>
+        </div>
+        <div class="card" data-step="1" data-effect="fade-up">
+          <p class="eyebrow">강원특별자치도교육청</p><b>교원 집단상담 프로그램</b>
+          <ul><li>심리적 어려움을 겪는 교원</li><li>강릉 한국여성수련원 3일</li><li>개인상담·심리검사·명상테라피</li></ul>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="callout" data-step="2"><b>시사점</b> 이제 필요한 것은 지역 자원과 연결되고, 효과를 끝까지 추적하는 모델이다.</div>
+    </section>
+
+    <!-- 10 as-is to-be -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t10" data-transition="fade">
+      <p class="eyebrow">01 왜 필요한가 · 우리가 바꾸려는 것</p>
+      <h2 id="t10">듣는 연수에서, 몸으로 회복하는 연수로</h2>
+      <table>
+        <thead><tr><th>구분</th><th>지금 (as-is)</th><th>바꿀 방식 (to-be)</th></tr></thead>
+        <tbody>
+          <tr><th>참여 방식</th><td>강의·설명 중심, 듣는 연수</td><td class="ok">몸을 쓰고, 만들고, 맛보고, 쉬는 체험</td></tr>
+          <tr><th>공간</th><td>연수원·수련원 안에서만 머무름</td><td class="ok">호수·농원·한옥학교·마을로 이어지는 동선</td></tr>
+          <tr><th>지역과의 관계</th><td>지역 자원과 연결 없이 시설 이용</td><td class="ok">간동면 업체가 주인공, 예산 60% 이상 지역 지출</td></tr>
+          <tr><th>효과 확인</th><td>끝나는 날 만족도 1회 측정</td><td class="ok">사전 → 직후 → 개학 1개월 후 3회 측정</td></tr>
+        </tbody>
+      </table>
+      <div class="spacer"></div>
+      <div class="callout"><b>교사의 회복 + 지역의 회복</b>, 그 효과가 숫자로 증명되는 연수 모델</div>
+    </section>
+
+    <!-- 11 간지 02 -->
+    <section class="slide section" role="group" aria-roledescription="슬라이드" aria-labelledby="t11" data-transition="zoom">
+      <p class="num">02</p>
+      <h1 id="t11">누구를 위한 워크숍인가</h1>
+      <p class="muted">우리는 누구이고, 누구를 위해 이 워크숍을 만드는가</p>
+    </section>
+
+    <!-- 12 세 주체 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t12">
+      <p class="eyebrow">02 누구를 위해</p>
+      <h2 id="t12">이 워크숍이 만족시켜야 할 세 주체</h2>
+      <div class="cards three">
+        <div class="card solid" data-step="1" data-effect="fade-up"><p class="eyebrow">참가자</p><b>교사</b>한 학기 동안 지친 교사가 개학 전 여름에 일상에서 벗어나 2학기를 시작할 힘을 되찾는다.</div>
+        <div class="card" data-step="1" data-effect="fade-up"><p class="eyebrow">구매자</p><b>교육청</b>효과가 증명된 교원 회복 연수 모델을 얻는다. 쉽게 구매하고, 다음 해 여름에도 다시 구매하는 것이 목표다.</div>
+        <div class="card" data-step="1" data-effect="fade-up"><p class="eyebrow">지역</p><b>간동면</b>오월농원·한옥학교·너래안·무래이 등 업체가 매출을 얻고, 다시 찾고 싶은 회복의 동네로 알려진다.</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="callout" data-step="2"><b>세 목표가 만나는 곳</b> 교사가 회복할수록 지역이 살아나고, 그 결과가 교육청의 재구매로 이어진다.</div>
+    </section>
+
+    <!-- 13 페르소나 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t13">
+      <p class="eyebrow">02 누구를 위해 · 타깃 페르소나 (가상 인물)</p>
+      <h2 id="t13">참가자는 쉼을, 구매자는 숫자를 원한다</h2>
+      <div class="cols half">
+        <div class="card">
+          <p class="eyebrow">참가자</p>
+          <b>이서연 (42) · 초등교사 15년 차, 6학년 담임</b>
+          <p class="muted">춘천 시내 학생 800명 규모 초등학교</p>
+          <p class="quote">"방학인데도 2학기 생각만 하면 잠이 잘 안 와요."</p>
+          <ul>
+            <li><b>원하는 것</b> 업무 얘기 없는 쉼, 부담 없는 활동, 바로 써먹을 회복 방법</li>
+            <li><b>걱정</b> 감정을 털어놓으라는 압박, 무리한 활동과 더위, 억지 친목</li>
+            <li><b>우리의 답</b> 발언 자율, 보행 강도 조절, 개인 기록, 조용한 방 상시 운영</li>
+          </ul>
+        </div>
+        <div class="card">
+          <p class="eyebrow">구매자</p>
+          <b>박정훈 (49) · 강원특별자치도교육청 장학사</b>
+          <p class="muted">교원 복지·교육활동 보호 담당</p>
+          <p class="quote">"좋았다는 말 말고, 보고서에 쓸 숫자가 필요해요."</p>
+          <ul>
+            <li><b>원하는 것</b> 교원 정신건강 지원 실적과 내년 예산 확보 근거</li>
+            <li><b>부담</b> 한여름 야외 안전사고, 휴가철 숙소·차량 확보</li>
+            <li><b>우리의 답</b> KPI 5개와 3회 설문, 리스크 관리 매뉴얼, D-75 실행 일정</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 14 왜 우리 조 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t14">
+      <p class="eyebrow">02 누구를 위해 · 우리는 누구인가</p>
+      <h2 id="t14">현장에서 확인하고, 결과는 숫자로 보여 준다</h2>
+      <div class="cards three">
+        <div class="card" data-step="1" data-effect="fade-up"><b>로컬 자원 큐레이션</b><ul><li>간동면 현장 답사</li><li>협력처 대표 인터뷰</li><li>자원 지도와 대체처 목록</li></ul></div>
+        <div class="card" data-step="1" data-effect="fade-up"><b>실행 가능한 운영 설계</b><ul><li>A·B조 20명 교대 동선</li><li>날씨별 실내 대체안</li><li>응급 의료 3단계 연락망</li></ul></div>
+        <div class="card" data-step="1" data-effect="fade-up"><b>목적에 맞는 성과 설계</b><ul><li>사전·직후 같은 설문</li><li>개학 1개월 후 추적 설문</li><li>지역 지출·참여 업체 지표</li></ul></div>
+      </div>
+      <div class="spacer"></div>
+      <div class="callout" data-step="2"><b>그래서</b> 교육청은 '좋은 경험'과 '설명할 수 있는 결과'를 한 번에 얻는다.</div>
+    </section>
+
+    <!-- 15 간지 03 -->
+    <section class="slide section" role="group" aria-roledescription="슬라이드" aria-labelledby="t15" data-transition="zoom">
+      <p class="num">03</p>
+      <h1 id="t15">왜 화천 간동, 왜 8월인가</h1>
+      <p class="muted">아픈 역사와 치유가 공존하는 동네, 상처를 가진 곳이 이제 다른 사람의 회복을 돕는다</p>
+    </section>
+
+    <!-- 16 간동면의 시간 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t16">
+      <p class="eyebrow">03 왜 화천 간동 · 간동면이 지나온 시간</p>
+      <h2 id="t16">아픈 역사의 동네가 회복을 돕는 동네로</h2>
+      <div class="timeline">
+        <div data-step data-effect="fade-up"><b>1944</b>화천댐과 파로호. 군수산업을 위해 북한강 협곡을 막아 호수가 생겼다.</div>
+        <div data-step data-effect="fade-up"><b>1951</b>전쟁의 호수. 큰 전투 뒤 '파로호(破虜湖)'라는 이름이 붙었다.</div>
+        <div data-step data-effect="fade-up"><b>1960~70년대</b>오음리 파월장병훈련장. 베트남으로 떠나는 장병들의 이별이 지나갔다.</div>
+        <div data-step data-effect="fade-up"><b>지금</b>훈련장은 만남의 장으로, 호수는 쉼의 풍경으로. 청년농부와 장인이 일하는 마을.</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="callout"><b>운영 원칙</b> 가장 큰 자원은 자연과 사람이다. 역사 이야기는 원하는 사람만 듣는 선택형으로 운영한다.</div>
+    </section>
+
+    <!-- 17 네 가지 이유 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t17">
+      <p class="eyebrow">03 왜 화천 간동 · 네 가지 이유</p>
+      <h2 id="t17">자연, 사람, 거리, 규모가 모두 맞는다</h2>
+      <div class="cards">
+        <div class="card" data-step="1" data-effect="fade-up"><p class="eyebrow">01 자연</p><b>호수 마을</b>파로호와 산으로 둘러싸여, 걷고 멈추는 것만으로 일상의 속도가 낮아진다.</div>
+        <div class="card" data-step="1" data-effect="fade-up"><p class="eyebrow">02 사람</p><b>기르고 만드는 사람들</b>청년농부, 저온압착 들기름 농부, 한옥 목수를 가르치는 학교.</div>
+        <div class="card" data-step="1" data-effect="fade-up"><p class="eyebrow">03 거리</p><b>춘천에서 약 1시간</b>부담 없이 오가면서도 학교와 충분히 떨어진 곳.</div>
+        <div class="card" data-step="1" data-effect="fade-up"><p class="eyebrow">04 규모</p><b>20명 단위 작은 업체</b>대형 시설 대신 작은 협력처. 연수 예산이 곧 주민의 소득이 된다.</div>
+      </div>
+      <div class="spacer"></div>
+      <p class="footnote">※ 이동 시간은 답사·지도 기준 추정치로, 버스 업체와 최종 확인이 필요합니다.</p>
+    </section>
+
+    <!-- 18 왜 8월 중순 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t18">
+      <p class="eyebrow">03 왜 8월 · 2학기 전 쉼표</p>
+      <h2 id="t18">8월 중순 평일, 개학 직전에 쉼표를 찍는다</h2>
+      <table style="margin-bottom: calc(40 * var(--u))">
+        <thead><tr><th>1학기 · 3~7월</th><th>여름방학 · 7월 말~8월</th><th>2학기 개학 · 8월 말</th><th>2학기 첫 달 · 9월</th></tr></thead>
+        <tbody><tr><td class="muted">학기 중</td><td class="ok">★ 워크숍 (8월 중순)</td><td class="muted">개학</td><td class="ok">1개월 후 설문 (9월 중순)</td></tr></tbody>
+      </table>
+      <div class="timeline">
+        <div><b>개학 직전</b>2학기 걱정이 커지는 8월 중순, 시작 전에 쉼표를 찍는다.</div>
+        <div><b>평일 1박 2일</b>광복절 연휴 주간을 피해 휴가철 정체를 줄인다.</div>
+        <div><b>여름 작물</b>단호박·방울토마토·옥수수를 직접 거둘 수 있는 시기다.</div>
+        <div><b>효과 확인</b>개학 한 달 뒤 같은 설문으로 지속 효과를 잰다.</div>
+      </div>
+      <div class="spacer"></div>
+      <p class="footnote">함께 대비할 것: 폭염·소나기·태풍·열대야 → 29장 날씨 시나리오</p>
+    </section>
+
+    <!-- 19 간지 04 -->
+    <section class="slide section" role="group" aria-roledescription="슬라이드" aria-labelledby="t19" data-transition="zoom">
+      <p class="num">04</p>
+      <h1 id="t19">1박 2일 프로그램</h1>
+      <p class="muted">1일 차는 멈추고, 2일 차는 쌓고 내려놓고 정리한다</p>
+    </section>
+
+    <!-- 20 1박 2일 한눈에 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t20">
+      <p class="eyebrow">04 프로그램 · 전체 흐름</p>
+      <h2 id="t20">1박 2일 한눈에 보기</h2>
+      <div class="cols half">
+        <div class="card solid" data-step="1" data-effect="fade-up">
+          <p class="eyebrow">1일 차 · 멈추기</p>
+          <b>업무에서 떨어져 내 상태를 살핀다</b>
+          <ol>
+            <li>내 상태 체크</li>
+            <li>파로호 천천히 걷기</li>
+            <li>몸의 긴장 낮추기</li>
+            <li>채우기: 음료와 들기름</li>
+            <li>회복 카드 ① ② 쓰기</li>
+            <li>나누기: 동료와 이야기</li>
+          </ol>
+        </div>
+        <div class="card" data-step="2" data-effect="fade-up">
+          <p class="eyebrow">2일 차 · 쌓고, 내려놓고, 정리하기</p>
+          <b>지역 체험을 회복 행동으로 잇는다</b>
+          <ol>
+            <li>다시 쌓기: 한옥학교 목공</li>
+            <li>내려놓기: 오월농원 수확 <span class="muted">(1·2번은 A·B조가 60분씩 교대)</span></li>
+            <li>느릅마을 둘러보기</li>
+            <li>회복 카드 ③ 완성</li>
+            <li>사후 설문·수료</li>
+          </ol>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <p class="footnote">회복의 네 단계: 다시 쌓기(화천한옥학교) · 내려놓기(오월농원) · 채우기(너래안) · 나누기(무래이·동료와의 대화)</p>
+    </section>
+
+    <!-- 21 1일 차 오전 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t21" data-transition="fade">
+      <p class="eyebrow">04 프로그램 · 1일 차 오전</p>
+      <h2 id="t21">1일 차 오전: 내 상태를 살피고, 호수를 걷는다</h2>
+      <table class="tt">
+        <thead><tr><th>시간</th><th>프로그램</th><th>장소</th><th>이렇게 진행한다</th></tr></thead>
+        <tbody>
+          <tr><td class="t">09:30–10:00</td><td>집결·출석 확인</td><td>집결지</td><td>참가자 확인 후 차량 탑승</td></tr>
+          <tr><td class="t">10:00–10:30</td><td>오리엔테이션</td><td>간동종합문화센터</td><td>일정·안전·참여 원칙 안내. 발언·공유는 자율</td></tr>
+          <tr class="pick"><td class="t">10:30–11:00</td><td>내 상태 체크</td><td>간동종합문화센터</td><td>피로·긴장 체크리스트, 마음의 여유 점수(0~10점) 사전 기록. 결과는 공개하지 않는다</td></tr>
+          <tr class="pick"><td class="t">11:15–12:00</td><td>파로호 천천히 걷기</td><td>파로호 호숫가</td><td>그늘 위주의 짧은 산책이나 경관 감상. 지역 이야기는 원하는 사람만</td></tr>
+          <tr><td class="t">12:15–13:15</td><td>지역 점심</td><td>사전 확정 식당</td><td>메뉴·알레르기 사전 확인</td></tr>
+        </tbody>
+      </table>
+      <div class="spacer"></div>
+      <p class="footnote">이동: 11:00–11:15 → 파로호 · 12:00–12:15 → 점심 식당 · 13:15–13:30 → 문화센터</p>
+    </section>
+
+    <!-- 22 1일 차 오후 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t22" data-transition="fade">
+      <p class="eyebrow">04 프로그램 · 1일 차 오후</p>
+      <h2 id="t22">1일 차 오후: 긴장을 풀고, 나를 채운다</h2>
+      <table class="tt">
+        <thead><tr><th>시간</th><th>프로그램</th><th>장소</th><th>이렇게 진행한다</th></tr></thead>
+        <tbody>
+          <tr class="pick"><td class="t">13:30–14:15</td><td>몸의 긴장 낮추기</td><td>간동종합문화센터</td><td>냉방 실내에서 호흡, 목·어깨 스트레칭. 실력·유연성은 평가하지 않는다</td></tr>
+          <tr class="pick"><td class="t">14:15–14:45</td><td>채우기: 음료와 들기름</td><td>간동종합문화센터</td><td>무래이 음료를 센터로 전달, 너래안 대표의 들기름 이야기와 시식</td></tr>
+          <tr class="pick"><td class="t">14:45–15:15</td><td>내 회복 방식 적어보기</td><td>간동종합문화센터</td><td>회복 카드 ① 피로 신호 ② 도움이 되는 활동 (개인 기록)</td></tr>
+          <tr><td class="t">15:15–15:30</td><td>정리·출발 확인</td><td>간동종합문화센터</td><td>짐 정리, 화장실, 인원 확인</td></tr>
+          <tr><td class="t">15:30–16:00</td><td>숙소 이동</td><td>→ 숙소</td><td>차량 편도 30분 가정 (숙소 확정 후 확인 필요)</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 23 1일 차 저녁 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t23" data-transition="fade">
+      <p class="eyebrow">04 프로그램 · 1일 차 저녁</p>
+      <h2 id="t23">1일 차 저녁: 쉬고, 편하게 이야기한다</h2>
+      <table class="tt">
+        <thead><tr><th>시간</th><th>프로그램</th><th>장소</th><th>이렇게 진행한다</th></tr></thead>
+        <tbody>
+          <tr><td class="t">16:00–17:30</td><td>체크인·개인 정비</td><td>숙소</td><td>객실 배정, 샤워하며 진드기 확인, 휴식</td></tr>
+          <tr><td class="t">18:00–19:00</td><td>저녁 식사</td><td>사전 확정 식당</td><td>지역 식사 (17:30 이동)</td></tr>
+          <tr class="pick"><td class="t">19:15–20:00</td><td>나누기: 동료와 이야기하기</td><td>공동 공간</td><td>대화 주제 카드로 가벼운 이야기. 업무 발표·개인 경험 공개는 의무가 아니다</td></tr>
+          <tr><td class="t">20:00 이후</td><td>자유시간</td><td>숙소</td><td>개별 물놀이 금지 안내</td></tr>
+        </tbody>
+      </table>
+      <div class="spacer"></div>
+      <div class="callout"><b>1일 차 기대효과</b> 자신의 피로·긴장 신호를 알아차리고, 자연과 휴식을 경험하며, 도움이 될 회복 방법을 한 가지 이상 떠올린다.</div>
+    </section>
+
+    <!-- 24 2일 차 오전 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t24" data-transition="fade">
+      <p class="eyebrow">04 프로그램 · 2일 차 오전</p>
+      <h2 id="t24">2일 차 오전: 20명씩 두 곳을 번갈아</h2>
+      <table class="tt">
+        <thead><tr><th>시간</th><th>A조 20명</th><th>B조 20명</th></tr></thead>
+        <tbody>
+          <tr><td class="t">07:30–08:30</td><td colspan="2">아침 식사, 체크아웃, 탑승 확인 (숙소)</td></tr>
+          <tr><td class="t">08:30–09:00</td><td colspan="2">이동 30분 · A조는 한옥학교, B조는 오월농원에서 하차</td></tr>
+          <tr class="pick"><td class="t">09:00–10:00 1부</td><td>다시 쌓기 · 목공 체험 (화천한옥학교)</td><td>내려놓기 · 수확·자연 관찰 (오월농원)</td></tr>
+          <tr><td class="t">10:00–10:15</td><td colspan="2">조 교대 이동 · 인원·컨디션 확인, 물 마시기</td></tr>
+          <tr class="pick"><td class="t">10:15–11:15 2부</td><td>내려놓기 · 수확·자연 관찰 (오월농원)</td><td>다시 쌓기 · 목공 체험 (화천한옥학교)</td></tr>
+        </tbody>
+      </table>
+      <div class="spacer"></div>
+      <div class="callout">
+        <p><b>다시 쌓기</b> 나무를 다듬어 작은 결과물을 완성하며 '나도 해낼 수 있다'는 감각을 되찾는다. <b>내려놓기</b> 선선한 아침, 여름 작물을 거두며 긴장을 몸으로 푼다.</p>
+        <p style="margin: 0"><b>폭염 시</b> 주의보: 농원 체험 40분 이내 · 경보: 농원 대신 실내 수확물 다듬기</p>
+      </div>
+    </section>
+
+    <!-- 25 2일 차 마무리 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t25" data-transition="fade">
+      <p class="eyebrow">04 프로그램 · 2일 차 마무리</p>
+      <h2 id="t25">2일 차 마무리: 마을을 걷고, 실천을 정한다</h2>
+      <table class="tt">
+        <thead><tr><th>시간</th><th>프로그램</th><th>장소</th><th>이렇게 진행한다</th></tr></thead>
+        <tbody>
+          <tr><td class="t">11:30–12:00</td><td>느릅마을 둘러보기</td><td>파로호 느릅마을</td><td>40명 합류. 천천히 둘러보며, 긴 도보나 강한 신체 활동은 없다</td></tr>
+          <tr><td class="t">12:15–13:15</td><td>지역 점심</td><td>사전 확정 식당</td><td>&nbsp;</td></tr>
+          <tr class="pick"><td class="t">13:30–14:15</td><td>마무리: 회복 카드 완성</td><td>간동종합문화센터</td><td>③ 이번 주에 해볼 행동 1개 확정. 원하는 사람만 공유</td></tr>
+          <tr class="pick"><td class="t">14:15–14:30</td><td>사후 설문·수료</td><td>간동종합문화센터</td><td>스트레스·만족도·추천 의향 설문, 상담 연락처 카드 배부</td></tr>
+          <tr><td class="t">14:30–15:00</td><td>귀가</td><td>→ 집결지</td><td>차량 집결 및 출발</td></tr>
+        </tbody>
+      </table>
+      <div class="spacer"></div>
+      <div class="callout"><b>2일 차 기대효과</b> 지역 자원을 직접 경험하고, 나에게 맞는 회복 방법을 정리해, 일상에서 실천할 작은 행동 하나를 고른다.</div>
+    </section>
+
+    <!-- 26 회복 카드 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t26">
+      <p class="eyebrow">04 프로그램 · 회복 기록 카드</p>
+      <h2 id="t26">감상문이 아니라, 세 칸짜리 회복 카드</h2>
+      <div class="cols">
+        <div class="callout">
+          <h3>나의 회복 카드 <span class="muted">· 이름은 쓰지 않아도 됩니다</span></h3>
+          <ol>
+            <li><b>요즘 내 몸과 마음의 신호</b> (1일 차)<br><span class="muted">예: 쉽게 피곤함, 잠들기 어려움, 예민해짐</span></li>
+            <li><b>나에게 도움이 되는 회복 방식</b> (1~2일 차)<br><span class="muted">예: 10분 걷기, 음악 듣기, 휴대전화 내려놓기</span></li>
+            <li><b>이번 주에 실제로 해볼 행동 하나</b> (2일 차)<br><span class="muted">예: 퇴근 후 10분 산책을 주 2회</span></li>
+          </ol>
+        </div>
+        <ul>
+          <li data-step><b>개인 기록이 기본</b>, 발표는 선택이다</li>
+          <li data-step><b>업무는 적지 않아도 된다</b>, 민원 내용 공개 불필요</li>
+          <li data-step><b>나눈 내용은 밖으로 나가지 않는다</b>, 시작할 때 함께 약속</li>
+          <li data-step><b>카드는 가져간다</b>, 9월 중순 설문에서 실천 여부를 돌아본다</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 27 장소 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t27" data-transition="fade">
+      <p class="eyebrow">04 프로그램 · 간동면 자원</p>
+      <h2 id="t27">함께하는 간동면 장소 8곳</h2>
+      <table>
+        <thead><tr><th>장소</th><th>역할</th><th>언제</th><th>확인할 것</th></tr></thead>
+        <tbody>
+          <tr><td>간동종합문화센터</td><td>공동 거점, 조용히 쉬는 방 1실</td><td>1·2일 차</td><td>40명 수용, 냉방·음향, 대관 시간</td></tr>
+          <tr><td>파로호 호숫가</td><td>천천히 걷기</td><td>1일 차 오전</td><td>산책 지점 답사 후 확정, 그늘</td></tr>
+          <tr><td>너래안</td><td>들기름 이야기·시식</td><td>1일 차 오후</td><td>시식 인원·위생·알레르기</td></tr>
+          <tr><td>무래이 (카페)</td><td>음료 전달, 우천 시 대기</td><td>1일 차 오후</td><td>주소 확인 필요, 수량·전달 시각</td></tr>
+          <tr><td>화천한옥학교</td><td>목공 체험</td><td>2일 차 오전</td><td>체험 정원·재료비·준비 시간</td></tr>
+          <tr><td>오월농원</td><td>수확·자연 관찰</td><td>2일 차 오전</td><td>20명 가능 여부, 우천 대안</td></tr>
+          <tr><td>파로호 느릅마을</td><td>마을 둘러보기</td><td>2일 차 낮</td><td>단체 안내 가능 여부, 그늘 동선</td></tr>
+          <tr><td>월남 파병용사 만남의 장</td><td>선택형 역사 이야기, 숙소 후보</td><td>선택</td><td>단체 숙박 가능 여부</td></tr>
+        </tbody>
+      </table>
+      <div class="spacer"></div>
+      <p class="footnote">원본 기준 모든 장소는 간동면 안에서 차로 15분 이내 (무래이·숙소 위치는 확정 후 표기)</p>
+    </section>
+
+    <!-- 28 간지 05 -->
+    <section class="slide section" role="group" aria-roledescription="슬라이드" aria-labelledby="t28" data-transition="zoom">
+      <p class="num">05</p>
+      <h1 id="t28">어떻게 안전하게 운영하나</h1>
+      <p class="muted">8월 중순, 40명, 야외 체험. 무엇이 잘못될 수 있고, 그때 무엇을 하는가</p>
+    </section>
+
+    <!-- 29 날씨 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t29" data-transition="fade">
+      <p class="eyebrow">05 운영·리스크 · 8월 날씨</p>
+      <h2 id="t29">날씨 시나리오 다섯 가지와 대응</h2>
+      <table class="tt">
+        <thead><tr><th>상황</th><th>판단 기준</th><th>대응</th></tr></thead>
+        <tbody>
+          <tr class="pick"><td>폭염 (가능성 가장 높음)</td><td>주의보 체감 33℃ 이상<br>경보 35℃ 이상</td><td>주의보: 농원 40분 이내, 그늘·생수·모자, 버스 냉방 대기<br>경보: 농원 제외, 실내 수확물 다듬기·요리 체험</td></tr>
+          <tr><td>소나기·국지성 호우</td><td>한여름 오후 대기 불안정</td><td>비닐하우스·창고 작업으로 축소, 우비 40벌, 천둥·번개 시 즉시 실내로</td></tr>
+          <tr><td>집중호우</td><td>호우주의보 이상</td><td>계곡·하천 옆 도로와 파로호 저지대 회피, 늦장마면 D-2에 연기 검토</td></tr>
+          <tr><td>태풍</td><td>강원 영서 경보 또는 진로 포함</td><td>연기 또는 취소. 연기 기준과 환불 조건은 교육청과 사전 합의</td></tr>
+          <tr><td>열대야</td><td>밤 최저 25℃ 이상</td><td>객실 냉방 사전 확인, 2일 차 시작 1시간 늦추고 1부 단축</td></tr>
+        </tbody>
+      </table>
+      <div class="spacer"></div>
+      <div class="callout"><b>판단 시점</b> D-7(8월 11일) 중기예보로 대체안 예고 → D-2(8월 16일) 협력처에 실내 전환 공유 → 당일 07:00 최종 결정 후 단톡방 공지</div>
+    </section>
+
+    <!-- 30 야외 위험 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t30" data-transition="fade">
+      <p class="eyebrow">05 운영·리스크 · 여름철 야외 위험</p>
+      <h2 id="t30">여름 야외에서 생길 수 있는 위험 여섯 가지</h2>
+      <table class="tt">
+        <thead><tr><th>위험</th><th>어디서</th><th>대응</th></tr></thead>
+        <tbody>
+          <tr class="pick"><td>온열질환</td><td>농원, 야외 이동</td><td>30분마다 물 마시기, 그늘 휴식. 어지럼·두통·구토 시 즉시 몸을 식히고, 의식이 흐리면 119</td></tr>
+          <tr><td>벌 쏘임</td><td>농원, 숲길</td><td>향수·밝은 옷 자제 안내, 벌집 사전 점검, 알레르기 사전 조사</td></tr>
+          <tr><td>진드기 (SFTS)</td><td>풀밭, 텃밭</td><td>긴 옷과 기피제, 풀밭에 앉지 않기, 숙소 샤워 때 몸 확인</td></tr>
+          <tr><td>모기</td><td>저녁 농원, 숙소 주변</td><td>기피제, 긴 옷</td></tr>
+          <tr><td>물놀이 사고</td><td>파로호, 계곡</td><td>자유시간에 개별로 물에 들어가지 않도록 안내</td></tr>
+          <tr><td>식중독</td><td>시식, 단체 식사</td><td>시식은 바로 먹을 만큼만, 도시락은 아이스박스 운반, 알레르기 사전 확인</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 31 응급·정서 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t31">
+      <p class="eyebrow">05 운영·리스크 · 몸과 마음의 안전</p>
+      <h2 id="t31">다치면 3단계로, 힘들면 언제든 쉬게</h2>
+      <div class="cols half">
+        <div>
+          <h3>응급 의료 3단계</h3>
+          <table>
+            <tbody>
+              <tr><th>현장</th><td>구급상자, 자동심장충격기 위치 파악, 알레르기·지병 사전 조사표</td></tr>
+              <tr class="pick"><th>1차</th><td>모든 응급 상황은 먼저 119 신고</td></tr>
+              <tr><th>2차 경상</th><td>화천군보건의료원 · 033-442-7115 · 차로 약 30분</td></tr>
+              <tr><th>3차 중증</th><td>한림대 춘천성심병원 033-252-9970 · 강원대학교병원 033-258-2000 · 약 1시간</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">
+          <h3>참가자 정서 안전 다섯 가지</h3>
+          <ol>
+            <li>전문 상담사 1명 동행 (교육활동보호센터 연계)</li>
+            <li>소감 나누기는 선택, 나눈 내용은 밖에 공유하지 않음</li>
+            <li>조용하고 시원한 공간 1곳 상시 비워 둠</li>
+            <li>역사 해설은 원하는 사람만</li>
+            <li>개학 후 상담 연결용 연락처 카드 배부</li>
+          </ol>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <p class="footnote">이동 시간은 추정치 (확인 필요) · 안전·의료 담당이 병원 동행</p>
+    </section>
+
+    <!-- 32 운영·이동 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t32">
+      <p class="eyebrow">05 운영·리스크 · 운영과 이동</p>
+      <h2 id="t32">휴가철에 생길 문제를 미리 막는다</h2>
+      <div class="cards three">
+        <div class="card"><b>숙소 부족</b>성수기라 빨리 찬다. D-75(6월 초)까지 예약하고 단체 예약 확인서를 받는다.</div>
+        <div class="card"><b>교통 혼잡</b>광복절 연휴 주간을 피해 평일로 잡고, 이동마다 15분 여유를 둔다.</div>
+        <div class="card"><b>협력처 휴가</b>계약 때 행사일 영업을 확약받고, 프로그램마다 대체처 1곳을 정한다.</div>
+        <div class="card"><b>대형버스 진입</b>회차 공간을 확인하고, 필요하면 중형 승합 2대로 바꾼다.</div>
+        <div class="card"><b>차량·냉방 고장</b>예비차를 계약하고 출발 전 냉방 점검을 요청한다.</div>
+        <div class="card"><b>식사 장소 부족</b>답사에서 확인한 문제. 단체 식사를 미리 예약하고 간식·생수를 넉넉히.</div>
+      </div>
+      <div class="spacer"></div>
+      <p class="footnote">운영팀: 총괄 · 조별 현장 담당 1명 · 안전·의료 · 협력처 연락 · 상담사 1명</p>
+    </section>
+
+    <!-- 33 실행 일정 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t33" data-transition="fade">
+      <p class="eyebrow">05 운영·리스크 · 실행 일정</p>
+      <h2 id="t33">제안부터 1개월 후 설문까지 열 단계</h2>
+      <div class="cols half">
+        <table>
+          <thead><tr><th>시점</th><th>할 일</th></tr></thead>
+          <tbody>
+            <tr><td class="t">4월 (약 4개월 전)</td><td>교육청 제안·협의, 협력처 인터뷰</td></tr>
+            <tr><td class="t">D-75 · 6월 초</td><td>협력처 계약, 숙소·버스 예약</td></tr>
+            <tr><td class="t">D-45 · 7월 초</td><td>모집 공문 발송 (방학 전 도착)</td></tr>
+            <tr><td class="t">D-30 · 7월 중순</td><td>모집 마감, 사전 조사표·설문</td></tr>
+            <tr><td class="t">D-7 · 8월 11일</td><td>중기예보 확인, 대체안 예고</td></tr>
+          </tbody>
+        </table>
+        <table>
+          <thead><tr><th>시점</th><th>할 일</th></tr></thead>
+          <tbody>
+            <tr><td class="t">D-2 · 8월 16일</td><td>협력처 최종 확인, 실내 전환 공유</td></tr>
+            <tr class="pick"><td class="t">D-day · 8월 18일</td><td>07:00 날씨 보고 최종 결정</td></tr>
+            <tr class="pick"><td class="t">D+1 · 8월 19일</td><td>사후 설문, 한 줄 소감 수집</td></tr>
+            <tr><td class="t">D+14 · 9월 초</td><td>교육청에 결과 보고</td></tr>
+            <tr><td class="t">D+30 · 9월 중순</td><td>1개월 후 설문, 회복 지속 확인</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 34 KPI -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t34">
+      <p class="eyebrow">06 성과 지표</p>
+      <h2 id="t34">성공은 이 다섯 숫자로 판단한다</h2>
+      <div class="cards five">
+        <div class="card" data-step="1" data-effect="fade-up"><span class="big">20%↓</span><b>스트레스 감소</b>행사 전·후 같은 설문</div>
+        <div class="card solid" data-step="1" data-effect="fade-up"><span class="big">70%</span><b>1달 뒤 효과 유지</b>9월 중순 재설문</div>
+        <div class="card" data-step="1" data-effect="fade-up"><span class="big">4.5점</span><b>만족도</b>5점 만점, 종료 직후</div>
+        <div class="card" data-step="1" data-effect="fade-up"><span class="big">8/10명</span><b>동료에게 추천</b>종료 직후 설문</div>
+        <div class="card" data-step="1" data-effect="fade-up"><span class="big">1건+</span><b>내년 재협의</b>결과 보고 후 교육청 답변</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="callout"><b>운영 지표도 함께</b> 다친 사람 0명 · 일정 지연 30분 이내 · 예산 60% 이상 간동면 업체 사용</div>
+    </section>
+
+    <!-- 35 보조 지표 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t35" data-transition="fade">
+      <p class="eyebrow">06 성과 지표 · 보조 지표</p>
+      <h2 id="t35">회복, 참여, 그리고 지역까지 잰다</h2>
+      <div class="cols half">
+        <table>
+          <thead><tr><th>참가자·운영</th><th>목표</th></tr></thead>
+          <tbody>
+            <tr><td>마음의 여유 점수 (0~10)</td><td>첫날 대비 2점 이상 상승</td></tr>
+            <tr><td>프로그램별 만족도</td><td>목공·농원·들기름·카페 모두 4점 이상</td></tr>
+            <tr><td>끝까지 참여</td><td>40명 중 38명 이상</td></tr>
+            <tr><td>다친 사람</td><td>0명</td></tr>
+            <tr><td>일정 지연</td><td>전체 30분 이내</td></tr>
+          </tbody>
+        </table>
+        <table>
+          <thead><tr><th>지역</th><th>목표</th></tr></thead>
+          <tbody>
+            <tr><td>지역에 쓴 돈</td><td>예산의 60% 이상 간동면 업체</td></tr>
+            <tr><td>함께한 지역 업체</td><td>5곳 이상</td></tr>
+            <tr><td>특산물 산 사람</td><td>참가자 절반 이상</td></tr>
+            <tr><td>"또 오고 싶다"</td><td>10명 중 7명 이상</td></tr>
+            <tr><td>SNS·커뮤니티 후기</td><td>10건 이상</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="spacer"></div>
+      <div class="callout"><b>측정 시점</b> 사전(D-30) → 직후(D+1) → 2학기 첫 달(D+30), 같은 문항으로 세 번 재서 변화를 그래프로 보고</div>
+    </section>
+
+    <!-- 36 남기는 것 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t36">
+      <p class="eyebrow">06 기대효과</p>
+      <h2 id="t36">이 행사가 세 주체에게 남기는 것</h2>
+      <div class="cards three">
+        <div class="card"><p class="eyebrow">교사에게</p><b>2학기 전의 회복</b><ul><li>피로 신호 인식, 긴장 완화</li><li>부담 없는 동료 교류</li><li>일주일 안에 해볼 회복 행동 1가지</li></ul></div>
+        <div class="card"><p class="eyebrow">교육청에게</p><b>숫자로 확인한 연수 모델</b><ul><li>사전·직후·1개월 후 변화 그래프</li><li>안전·운영 결과 기록</li><li>다음 해와 다른 시·도 확장 근거</li></ul></div>
+        <div class="card"><p class="eyebrow">간동면에게</p><b>회복을 돕는 동네</b><ul><li>연수 예산 60% 이상 지역 지출</li><li>5곳 이상 업체 참여, 특산물 판매</li><li>다시 찾고 싶은 동네라는 후기</li></ul></div>
+      </div>
+      <div class="spacer"></div>
+      <p class="footnote">사후 결과 보고서: 목표 · 행사 개요 · 회복 효과(사전→직후→2학기 첫 달) · 만족도 · 참가자의 목소리 · 지역에 남긴 것 · 운영 결과 · 개선점과 다음 해 계획</p>
+    </section>
+
+    <!-- 37 감사 -->
+    <section class="slide section" role="group" aria-roledescription="슬라이드" aria-labelledby="t37" data-transition="zoom">
+      <p class="eyebrow">THANK YOU</p>
+      <h1 id="t37">감사합니다</h1>
+      <p class="muted">돌보는 사람을 돌보는 동네, 화천 간동</p>
+      <p class="footnote">로컬콘텐츠 개발 C조 · 이진기 · 이한성 · 오유택 · 배근영</p>
+    </section>
+
+    <!-- 38 출처 -->
+    <section class="slide" role="group" aria-roledescription="슬라이드" aria-labelledby="t38" data-transition="fade">
+      <p class="eyebrow">출처</p>
+      <h2 id="t38">자료 출처</h2>
+      <div class="cols half src">
+        <div>
+          <h3>통계·사례</h3>
+          <ul>
+            <li>https://www.gb.go.kr/page/10107/10004.do?pageDtlOrdrNo=1&amp;boardMngNo=12&amp;boardNo=1335144&amp;importUrl=/board/view.do</li>
+            <li>https://sports.donga.com/region/article/all/20260723/134349857/1</li>
+            <li>https://www.ajunews.com/view/20261016115717620</li>
+            <li>https://www.peoplepowerparty.kr/news/lawmaker_inspection_view/109688?page=6</li>
+            <li>https://www.kci.go.kr/kciportal/ci/sereArticleSearch/ciSereArtiView.kci?sereArticleSearchBean.artiId=ART003299907</li>
+          </ul>
+        </div>
+        <div>
+          <h3>장소·지역 정보</h3>
+          <ul>
+            <li>https://www.ktriptips.com/kor/tourspot/2790995 · /2568705 · /800214</li>
+            <li>https://gwhwacheon-mall.com/goods/view?no=103743</li>
+            <li>https://m.dailian.co.kr/news/view/1627452</li>
+            <li>https://ohworld.co.kr/</li>
+            <li>https://www.youtube.com/watch?v=tcWHuCTy5OM</li>
+            <li>https://www.khan.co.kr/article/200406151549491</li>
+            <li>https://ko.wikipedia.org/wiki/간동면 · https://ko.wikipedia.org/wiki/화천군</li>
+            <li>https://tools.devcomma.com/tools/public-toilet-finder/강원특별자치도/화천군</li>
+            <li>https://www.openstreetmap.org/copyright</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div class="progress" aria-hidden="true"><span></span></div>
+    <nav class="controls" aria-label="슬라이드 이동">
+      <button type="button" data-action="prev" aria-label="이전 슬라이드">‹</button>
+      <span class="counter" id="counter" aria-hidden="true"></span>
+      <button type="button" data-action="next" aria-label="다음 슬라이드">›</button>
+      <button type="button" data-action="full" aria-label="전체화면">⛶</button>
+    </nav>
+  </div>
+  <div class="sr-only" id="status" aria-live="polite" aria-atomic="true"></div>
+</main>
+<div class="blackout" aria-hidden="true"></div>
+
+<script>
+(() => {
+  const O = { transition: 'slide', duration: 500, historyMode: 'replace', allowRepeat: false, swipeMin: 40 };
+  const root = document.documentElement;
+  const stage = document.getElementById('stage');
+  const slides = [...stage.querySelectorAll(':scope > .slide')];
+  const status = document.getElementById('status');
+  const counter = document.getElementById('counter');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const n = slides.length;
+  let cur = -1, step = 0, active = null, autoTimer = null;
+
+  // ---------- 원칙 6: steps ----------
+  // numbered groups first (ascending), then unnumbered elements in DOM order; renumbered 1..N
+  function collect(slide) {
+    const byNum = new Map(), free = [];
+    for (const el of slide.querySelectorAll('[data-step]')) {
+      const k = parseInt(el.dataset.step, 10);
+      if (Number.isFinite(k)) (byNum.get(k) || byNum.set(k, []).get(k)).push(el);
+      else free.push([el]);
+    }
+    slide._groups = [...[...byNum.keys()].sort((a, b) => a - b).map(k => byNum.get(k)), ...free];
+    slide._groups.forEach(g => g.forEach((el, j) => el.style.setProperty('--i', j)));
+  }
+  function applyStep(slide, k) {
+    k = Math.max(0, Math.min(k, slide._groups.length));
+    slide._groups.forEach((g, i) => g.forEach(el => {
+      const out = parseInt(el.dataset.stepOut, 10);
+      el.classList.toggle('is-visible', i + 1 <= k && !(Number.isFinite(out) && k >= out));
+      el.classList.toggle('is-current', i + 1 === k);
+    }));
+    return k;
+  }
+  slides.forEach(collect);
+
+  // ---------- 원칙 5: transitions (WAAPI, skip-to-end on new input) ----------
+  const EFFECTS = {
+    fade:  () => ({ out: [{ opacity: 1 }, { opacity: 0 }], in: [{ opacity: 0 }, { opacity: 1 }] }),
+    slide: d => ({ out: [{ transform: 'translateX(0)' }, { transform: `translateX(${-100 * d}%)` }],
+                   in:  [{ transform: `translateX(${100 * d}%)` }, { transform: 'translateX(0)' }] }),
+    zoom:  d => ({ out: [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: `scale(${d > 0 ? 1.5 : 0.6})` }],
+                   in:  [{ opacity: 0, transform: `scale(${d > 0 ? 0.6 : 1.5})` }, { opacity: 1, transform: 'scale(1)' }] }),
+  };
+  function swap(from, to) {
+    if (active) active.done();
+    slides.forEach((s, i) => { s.inert = i !== to; });
+    const inEl = slides[to], outEl = slides[from];
+    if (!outEl) { inEl.classList.add('is-current'); return; }            // first render: no animation
+    let name = inEl.dataset.transition || O.transition, duration = O.duration;
+    if (reduce.matches) { name = 'fade'; duration = 150; }
+    const fx = (EFFECTS[name] || EFFECTS.fade)(to > from ? 1 : -1);
+    stage.dataset.animating = '';
+    outEl.classList.remove('is-current');
+    outEl.classList.add('is-outgoing');
+    inEl.classList.add('is-incoming');
+    outEl.style.willChange = inEl.style.willChange = 'transform, opacity';
+    const opts = { duration, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' };
+    const anims = [outEl.animate(fx.out, opts), inEl.animate(fx.in, opts)];
+    const t = {
+      done() {                                                            // idempotent
+        if (active !== t) return;
+        active = null;
+        clearTimeout(t.timer);
+        outEl.classList.remove('is-outgoing');
+        inEl.classList.remove('is-incoming');
+        inEl.classList.add('is-current');
+        outEl.style.willChange = inEl.style.willChange = '';
+        delete stage.dataset.animating;
+        anims.forEach(a => a.cancel());
+      },
+    };
+    active = t;
+    t.timer = setTimeout(t.done, duration + 200);                         // safety net
+    Promise.all(anims.map(a => a.finished)).then(t.done)
+      .catch(e => { if (e.name !== 'AbortError') console.error(e); });
+  }
+
+  // ---------- render ----------
+  function show(i, k, { fromUser = true } = {}) {
+    i = Math.max(0, Math.min(i, n - 1));
+    const changed = i !== cur, prevStep = step;
+    if (changed) swap(cur, i);
+    cur = i;
+    step = applyStep(slides[i], k);
+    if (!changed && step === prevStep) return;
+    root.style.setProperty('--progress', n > 1 ? i / (n - 1) : 0);
+    counter.textContent = `${i + 1} / ${n}`;
+    const text = changed
+      ? `슬라이드 ${i + 1} / ${n}: ${slides[i].querySelector('h1, h2')?.textContent.trim() ?? ''}`
+      : step > prevStep ? slides[i]._groups[step - 1].map(el => el.textContent.trim()).join(' ') : '';
+    if (text) requestAnimationFrame(() => { status.textContent = text; });
+    writeHash(changed && fromUser);
+    updateLive();
+    if (changed) startAutoplay(slides[i]);
+  }
+  function next() {
+    stopAutoplay();
+    if (step < slides[cur]._groups.length) show(cur, step + 1);
+    else if (cur < n - 1) show(cur + 1, 0);
+  }
+  function prev() {
+    stopAutoplay();
+    if (step > 0) show(cur, step - 1);
+    else if (cur > 0) show(cur - 1, Infinity);                            // previous slide: all steps visible
+  }
+
+  // ---------- 원칙 7: URL hash #/3 or #/3.2 (1-based slide) ----------
+  function readHash() {
+    const m = /^#\/(\d+)(?:\.(\d+))?$/.exec(location.hash);
+    return m ? [parseInt(m[1], 10) - 1, m[2] ? parseInt(m[2], 10) : 0] : [0, 0];
+  }
+  function writeHash(push) {
+    const hash = `#/${cur + 1}${step ? '.' + step : ''}`;
+    if (location.hash === hash) return;
+    try {
+      if (O.historyMode === 'push' && push) history.pushState(null, '', hash);
+      else history.replaceState(null, '', hash);
+    } catch { /* SecurityError when called too often, or file:// restrictions */ }
+  }
+  const onUrl = () => { const [i, k] = readHash(); show(i, k, { fromUser: false }); };
+
+  // ---------- 원칙 7: keyboard ----------
+  const EDITABLE = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) root.requestFullscreen?.().catch(() => {});
+    else document.exitFullscreen?.();
+  }
+  function onKey(e) {
+    if (e.defaultPrevented || e.isComposing || e.keyCode === 229) return;  // IME composition
+    if (e.ctrlKey || e.metaKey || e.altKey) return;                        // browser shortcuts
+    const t = e.target;
+    if (t.closest?.(EDITABLE)) return;
+    if ((e.key === ' ' || e.key === 'Enter') && t.closest?.('button, a, summary')) return;
+    let action = null, nav = true;
+    switch (e.key) {
+      case 'ArrowRight': case 'ArrowDown': case 'PageDown': action = next; break;
+      case 'ArrowLeft':  case 'ArrowUp':   case 'PageUp':   action = prev; break;
+      case ' ':    action = e.shiftKey ? prev : next; break;
+      case 'Home': action = () => { stopAutoplay(); show(0, 0); }; break;
+      case 'End':  action = () => { stopAutoplay(); show(n - 1, Infinity); }; break;
+      case '.':    action = () => root.classList.toggle('is-black'); nav = false; break;
+      default:
+        if (e.code === 'KeyN') action = next;                              // physical key: works in Korean IME state
+        else if (e.code === 'KeyP') action = prev;
+        else if (e.code === 'KeyB') { action = () => root.classList.toggle('is-black'); nav = false; }
+        else if (e.code === 'KeyF') { action = toggleFullscreen; nav = false; }
+    }
+    if (!action) return;                                                    // unhandled key: keep default
+    e.preventDefault();                                                     // stop page scroll even on repeat
+    if (e.repeat && !O.allowRepeat) return;
+    if (nav) root.classList.remove('is-black');
+    action();
+  }
+
+  // ---------- 원칙 7: swipe (touch only) ----------
+  let start = null;
+  function onDown(e) {
+    if (e.pointerType !== 'touch') return;
+    if (start) { start = null; return; }                                   // second finger: cancel
+    if (e.target.closest('[data-prevent-swipe], video[controls], audio[controls]')) return;
+    start = { id: e.pointerId, x: e.clientX, y: e.clientY, t: e.timeStamp };
+  }
+  function onUp(e) {
+    if (!start || e.pointerId !== start.id) return;
+    const dx = e.clientX - start.x, dy = e.clientY - start.y, dt = e.timeStamp - start.t;
+    start = null;
+    if (Math.abs(dx) < Math.max(O.swipeMin, stage.clientWidth * 0.08) || Math.abs(dx) < Math.abs(dy) * 1.2 || dt > 600) return;
+    dx < 0 ? next() : prev();
+  }
+
+  // ---------- 원칙 6: autoplay <section data-autoplay="900"> ----------
+  function startAutoplay(slide) {
+    stopAutoplay();
+    const ms = parseInt(slide.dataset.autoplay, 10);
+    if (!ms) return;
+    if (reduce.matches) { step = applyStep(slide, Infinity); writeHash(false); updateLive(); return; }
+    const tick = () => {
+      if (slides[cur] === slide && step < slide._groups.length) { show(cur, step + 1); autoTimer = setTimeout(tick, ms); }
+    };
+    autoTimer = setTimeout(tick, ms);
+  }
+  function stopAutoplay() { clearTimeout(autoTimer); autoTimer = null; }
+
+  function updateLive() {}
+
+  // ---------- bind ----------
+  document.addEventListener('keydown', onKey);
+  addEventListener('hashchange', onUrl);
+  addEventListener('popstate', onUrl);
+  stage.addEventListener('pointerdown', onDown, { passive: true });
+  stage.addEventListener('pointerup', onUp, { passive: true });
+  stage.addEventListener('pointercancel', () => { start = null; }, { passive: true });
+  document.querySelector('.controls').addEventListener('click', e => {
+    const a = e.target.closest('[data-action]')?.dataset.action;
+    if (a === 'next') next();
+    else if (a === 'prev') prev();
+    else if (a === 'full') toggleFullscreen();
+  });
+
+  // ---------- 원칙 10: print = every slide, every step ----------
+  addEventListener('beforeprint', () => {
+    if (active) active.done();
+    slides.forEach(s => { s.inert = false; applyStep(s, Infinity); });
+  });
+  addEventListener('afterprint', () => {
+    slides.forEach((s, i) => { s.inert = i !== cur; applyStep(s, i === cur ? step : 0); });
+  });
+
+  onUrl();
+  writeHash(false);                                                         // normalize URL without adding history
+})();
+</script>
+</body>
+</html>
